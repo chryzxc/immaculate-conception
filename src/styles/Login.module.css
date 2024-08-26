@@ -1,0 +1,27 @@
+.wrapper {
+  height: 100vh;
+  background-size: cover;
+  background-image: url(../assets/church.jpg),
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
+  background-blend-mode: overlay;
+}
+
+.form {
+  border-right: rem(1px) solid
+    light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+  min-height: 100vh;
+  max-width: rem(450px);
+  min-width: rem(500px);
+  padding-top: rem(80px);
+
+  @media (max-width: $mantine-breakpoint-sm) {
+    max-width: 100%;
+  }
+}
+
+.title {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  font-family:
+    Greycliff CF,
+    var(--mantine-font-family);
+}
