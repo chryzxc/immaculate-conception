@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Card,
   Container,
   Flex,
@@ -12,7 +13,9 @@ import {
 import TextEditor from "../components/TextEditor";
 import classes from "../styles/Home.module.css";
 import logoImg from "../assets/logo.png";
+import { routes } from "../constants/routes";
 import { useFetchAll } from "../hooks/useFirebaseFetcher";
+import { useNavigate } from "react-router-dom";
 
 const SectionContainer = ({
   children,
@@ -58,6 +61,8 @@ const Announcements = () => {
 };
 
 export default function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <div className={classes.wrapper}>
       <ScrollArea h="100vh">
@@ -102,6 +107,7 @@ export default function HomePage() {
                   <Text color="white" size="30px" fw={600}>
                     Immaculate Conception Parish Church
                   </Text>
+                  <Button onClick={() => navigate(routes.login)} />
                 </Box>
               </Stack>
             </Box>
