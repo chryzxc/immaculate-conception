@@ -55,10 +55,20 @@ export default function LoginPage() {
             mt="md"
             size="md"
           />
-          {/* <Checkbox label="Keep me logged in" mt="xl" size="md" /> */}
-          <Button fullWidth mt="xl" size="md" onClick={handleLogin}>
-            Login
-          </Button>
+
+          <div className="flex flex-col gap-2 mt-6">
+            <Button fullWidth size="md" onClick={handleLogin}>
+              Login
+            </Button>
+            <Button
+              fullWidth
+              size="md"
+              variant="outline"
+              onClick={() => navigate(routes.home)}
+            >
+              Go to Home
+            </Button>
+          </div>
 
           {/* <Text ta="center" mt="md">
             Don&apos;t have an account?{" "}
