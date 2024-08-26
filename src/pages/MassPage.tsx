@@ -47,16 +47,25 @@ const MassPage = () => {
           {
             accessor: "date",
             title: "Day",
-            render: ({ date }) => <Text>{dayjs(date).format("dddd")}</Text>,
+            render: (mass) => {
+              const { date } = mass as IMass;
+              return <Text>{dayjs(date).format("dddd")}</Text>;
+            },
           },
           {
             accessor: "priestId",
             title: "Priest",
-            render: ({ priestId }) => <Priest priestId={priestId} />,
+            render: (mass) => {
+              const { priestId } = mass as IMass;
+              return <Priest priestId={priestId} />;
+            },
           },
           {
             accessor: "status",
-            render: ({ status }: IMass) => <StatusBadge status={status} />,
+            render: (mass) => {
+              const { status } = mass as IMass;
+              return <StatusBadge status={status} />;
+            },
           },
           {
             accessor: "",
@@ -64,20 +73,22 @@ const MassPage = () => {
 
             textAlign: "center",
 
-            render: ({ status }: IMass) => (
-              <Group justify="center">
-                <Tooltip label="Approve">
-                  <ActionIcon variant="filled" color="green">
-                    <IconCheck />
-                  </ActionIcon>
-                </Tooltip>
-                <Tooltip label="Reject">
-                  <ActionIcon variant="filled" color="red">
-                    <IconX />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
-            ),
+            render: () => {
+              return (
+                <Group justify="center">
+                  <Tooltip label="Approve">
+                    <ActionIcon variant="filled" color="green">
+                      <IconCheck />
+                    </ActionIcon>
+                  </Tooltip>
+                  <Tooltip label="Reject">
+                    <ActionIcon variant="filled" color="red">
+                      <IconX />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              );
+            },
           },
         ]}
       />

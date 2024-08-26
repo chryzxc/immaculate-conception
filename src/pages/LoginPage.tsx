@@ -21,7 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    setUser({ id: "", email: "", name: "" });
+    setUser({ id: "", name: "" });
   };
 
   useEffect(() => {

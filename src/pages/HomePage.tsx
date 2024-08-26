@@ -34,7 +34,7 @@ const SectionContainer = ({
 };
 
 const Announcements = () => {
-  const { data: announcements = [], isLoading } = useFetchAll("announcements");
+  const { data: announcements = [] } = useFetchAll("announcements");
   return (
     <SectionContainer title="Announcements">
       <Stack>

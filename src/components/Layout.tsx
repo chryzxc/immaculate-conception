@@ -1,21 +1,17 @@
-import { AppShell, Burger, Container, Group, Image, Text } from "@mantine/core";
+import { AppShell, Burger, Group, Image, Text } from "@mantine/core";
 import { Outlet, useNavigate } from "react-router-dom";
-import React, { useEffect } from "react";
 
 import SideNavigation from "./SideNavigation";
 import logoImg from "../assets/logo.png";
 import { routes } from "../constants/routes";
 import { useDisclosure } from "@mantine/hooks";
+import { useEffect } from "react";
 import useUserStore from "../store/user";
 
 const Layout = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
   const [opened, { toggle }] = useDisclosure();
-
-  const rootFontSize = 16; // root font size in pixels
-  const remValue = 300 / rootFontSize; // converts px to rem
-  const width = `calc(100vw - ${remValue}rem)`;
 
   useEffect(() => {
     if (!user) {

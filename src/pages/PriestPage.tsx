@@ -163,25 +163,28 @@ const PriestPage = () => {
             accessor: "",
             title: "Actions",
             textAlign: "center",
-            render: (priest: IPriest) => (
-              <Group justify="center">
-                <Tooltip label="Edit priest">
-                  <ActionIcon onClick={() => editPriest(priest)}>
-                    <IconPencil />
-                  </ActionIcon>
-                </Tooltip>
-                {priest.id && (
-                  <Tooltip label="Delete priest">
-                    <ActionIcon
-                      onClick={() => deletePriest(priest.id)}
-                      color="red"
-                    >
-                      <IconTrash />
+            render: (priest) => {
+              const rowPriest = priest as IPriest;
+              return (
+                <Group justify="center">
+                  <Tooltip label="Edit priest">
+                    <ActionIcon onClick={() => editPriest(rowPriest)}>
+                      <IconPencil />
                     </ActionIcon>
                   </Tooltip>
-                )}
-              </Group>
-            ),
+                  {rowPriest.id && (
+                    <Tooltip label="Delete priest">
+                      <ActionIcon
+                        onClick={() => deletePriest(String(rowPriest.id))}
+                        color="red"
+                      >
+                        <IconTrash />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                </Group>
+              );
+            },
           },
         ]}
         records={priests}

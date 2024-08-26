@@ -164,25 +164,32 @@ const AnnouncementPage = () => {
             accessor: "",
             title: "Actions",
             textAlign: "center",
-            render: (announcement: IAnnouncement) => (
-              <Group justify="center">
-                <Tooltip label="Edit announcement">
-                  <ActionIcon onClick={() => editAnnouncement(announcement)}>
-                    <IconPencil />
-                  </ActionIcon>
-                </Tooltip>
-                {announcement.id && (
-                  <Tooltip label="Delete announcement">
+            render: (announcement) => {
+              const rowAnnouncement = announcement as IAnnouncement;
+              return (
+                <Group justify="center">
+                  <Tooltip label="Edit announcement">
                     <ActionIcon
-                      onClick={() => deleteAnnouncement(announcement.id)}
-                      color="red"
+                      onClick={() => editAnnouncement(rowAnnouncement)}
                     >
-                      <IconTrash />
+                      <IconPencil />
                     </ActionIcon>
                   </Tooltip>
-                )}
-              </Group>
-            ),
+                  {rowAnnouncement.id && (
+                    <Tooltip label="Delete announcement">
+                      <ActionIcon
+                        onClick={() =>
+                          deleteAnnouncement(String(rowAnnouncement.id))
+                        }
+                        color="red"
+                      >
+                        <IconTrash />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                </Group>
+              );
+            },
           },
         ]}
         records={announcements}

@@ -2,7 +2,7 @@ import create from "zustand";
 import { persist } from "zustand/middleware";
 
 interface IUser {
-  id: number;
+  id: string;
   name: string;
 }
 

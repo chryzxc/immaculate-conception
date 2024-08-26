@@ -1,7 +1,7 @@
 import "@mantine/core/styles.css";
 import "@mantine/core/styles.layer.css";
-import "mantine-datatable/styles.layer.css";
 import "@mantine/notifications/styles.css";
+import "mantine-datatable/styles.layer.css";
 import "./App.css";
 
 import { MantineProvider, createTheme } from "@mantine/core";
@@ -13,12 +13,10 @@ import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
-import MassPage from "./pages/MassPage";
 import { Notifications } from "@mantine/notifications";
 import PageNotFound from "./pages/PageNotFound";
 import PriestPage from "./pages/PriestPage";
 import { routes } from "./constants/routes";
-import useUserStore from "./store/user";
 
 const queryClient = new QueryClient();
 

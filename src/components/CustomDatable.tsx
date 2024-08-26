@@ -20,7 +20,7 @@ export default function CustomDatatable({
   onDeleteRecords,
   ...otherProps
 }: TCustomDatatable) {
-  const [selectedRecords, setSelectedRecords] = useState<any[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<unknown[]>([]);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [page, setPage] = useState(1);
   const [tableRecords, setTableRecords] = useState(records.slice(0, pageSize));
