@@ -10,10 +10,10 @@ import {
   IconLayoutDashboard,
   IconLogout,
 } from "@tabler/icons-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import classes from "../styles/SideNavigation.module.css";
 import { routes } from "../constants/routes";
-import { useLocation } from "react-router-dom";
 import useUserStore from "../store/user";
 
 const data = [
@@ -31,6 +31,7 @@ const data = [
 export default function SideNavigation() {
   const { logout } = useUserStore();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,7 +49,8 @@ export default function SideNavigation() {
     <a
       className={classes.link}
       data-active={isActive(item.link) || undefined}
-      href={item.link}
+      // href={item.link}
+      onClick={() => navigate(item.link)}
       key={item.label}
     >
       <item.icon className={classes.linkIcon} stroke={1.5} />
