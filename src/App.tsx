@@ -2,6 +2,9 @@ import "@mantine/core/styles.css";
 import "@mantine/core/styles.layer.css";
 import "@mantine/notifications/styles.css";
 import "mantine-datatable/styles.layer.css";
+import "@mantine/charts/styles.css";
+import "@mantine/dates/styles.css";
+
 import "./App.css";
 
 import { MantineProvider, createTheme } from "@mantine/core";
@@ -17,6 +20,10 @@ import { Notifications } from "@mantine/notifications";
 import PageNotFound from "./pages/PageNotFound";
 import PriestPage from "./pages/PriestPage";
 import { routes } from "./constants/routes";
+import WeddingPage from "./pages/WeddingPage";
+import MassPage from "./pages/MassPage";
+import BaptismPage from "./pages/BaptismPage";
+import ConfirmationPage from "./pages/ConfirmationPage";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +40,13 @@ const App = () => {
             <Route element={<Layout />}>
               <Route path={routes.dashboard} element={<DashboardPage />} />
               <Route path={routes.priests} element={<PriestPage />} />
-              {/* <Route path={routes.mass} element={<MassPage />} /> */}
+              <Route path={routes.wedding} element={<WeddingPage />} />
+              <Route path={routes.mass} element={<MassPage />} />
+              <Route path={routes.baptism} element={<BaptismPage />} />
+              <Route
+                path={routes.confirmation}
+                element={<ConfirmationPage />}
+              />
               <Route
                 path={routes.announcements}
                 element={<AnnouncementPage />}

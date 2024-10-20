@@ -1,38 +1,34 @@
 import { ActionIcon, Group, Text, Tooltip } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import {
-  useFetchAll,
-  useFetchById,
-  useUpdate,
-} from "../hooks/useFirebaseFetcher";
+import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
 import dayjs from "dayjs";
 import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
-import { IMass } from "../database";
+import { IConfirmations } from "../database";
 import { AppointmentStatusEnum } from "../enums";
 
-const Priest = ({ priestId }: { priestId?: string | null }) => {
-  const { data: priest } = useFetchById("priests", priestId);
-  return <Text>{priest?.name}</Text>;
-};
-
-const ApproveRejectButtons = ({ mass }: { mass: IMass }) => {
-  const { mutate: updateMass, isPending: isUpdating } =
-    useUpdate("massAppointments");
+const ApproveRejectButtons = ({
+  confirmation,
+}: {
+  confirmation: IConfirmations;
+}) => {
+  const { mutate: updateConfirmation, isPending: isUpdating } = useUpdate(
+    "confirmationAppointment"
+  );
 
   const handleApprove = async () => {
     try {
-      if (!mass.id) return;
-      await updateMass({
-        id: mass.id,
+      if (!confirmation.id) return;
+      await updateConfirmation({
+        id: confirmation.id,
         data: { status: AppointmentStatusEnum.APPROVED },
       });
       notifications.show({
         title: "Success",
-        message: "Mass appointment has been approved",
+        message: "Confirmation appointment has been approved",
         color: "green",
       });
     } catch (e) {
@@ -46,14 +42,14 @@ const ApproveRejectButtons = ({ mass }: { mass: IMass }) => {
 
   const handleReject = async () => {
     try {
-      if (!mass.id) return;
-      await updateMass({
-        id: mass.id,
+      if (!confirmation.id) return;
+      await updateConfirmation({
+        id: confirmation.id,
         data: { status: AppointmentStatusEnum.REJECTED },
       });
       notifications.show({
         title: "Success",
-        message: "Mass appointment has been rejected",
+        message: "Confirmation appointment has been rejected",
         color: "green",
       });
     } catch (e) {
@@ -65,7 +61,7 @@ const ApproveRejectButtons = ({ mass }: { mass: IMass }) => {
     }
   };
 
-  if (mass.status !== AppointmentStatusEnum.PENDING) {
+  if (confirmation.status !== AppointmentStatusEnum.PENDING) {
     return null;
   }
 
@@ -95,41 +91,41 @@ const ApproveRejectButtons = ({ mass }: { mass: IMass }) => {
   );
 };
 
-const MassPage = () => {
-  const { data: masses = [], isLoading } = useFetchAll("massAppointments");
+const ConfirmationPage = () => {
+  const { data: confirmationes = [], isLoading } = useFetchAll(
+    "confirmationAppointment"
+  );
 
   return (
     <PageContent>
       <CustomDatatable
-        title="Mass Appointments"
+        title="Confirmation Appointments"
         fetching={isLoading}
-        records={masses}
+        records={confirmationes}
         columns={[
-          { accessor: "name" },
-          { accessor: "description" },
-          { accessor: "date" },
-          { accessor: "time" },
-          { accessor: "place" },
+          { accessor: "name", title: "Name" },
+          { accessor: "motherName", title: "Mother's Name" },
+          { accessor: "fatherName", title: "Father's Name" },
+          { accessor: "church", title: "Church" },
+          { accessor: "birthPlace", title: "Birth place" },
           {
-            accessor: "date",
-            title: "Day",
-            render: (mass) => {
-              const { date } = mass as IMass;
-              return <Text>{dayjs(date).format("dddd")}</Text>;
-            },
+            accessor: "guardianNumber",
+            title: "Contact Number",
           },
           {
-            accessor: "priestId",
-            title: "Priest",
-            render: (mass) => {
-              const { priestId } = mass as IMass;
-              return <Priest priestId={priestId} />;
+            accessor: "baptismDate",
+            title: "Date of Baptism",
+            render: (confirmation) => {
+              const { baptismDate } = confirmation as IConfirmations;
+              return <Text>{dayjs(baptismDate).format("dddd")}</Text>;
             },
           },
+          { accessor: "sponsorName", title: "Sponsor" },
+
           {
             accessor: "status",
-            render: (mass) => {
-              const { status } = mass as IMass;
+            render: (confirmation) => {
+              const { status } = confirmation as IConfirmations;
               return <StatusBadge status={status} />;
             },
           },
@@ -139,8 +135,10 @@ const MassPage = () => {
 
             textAlign: "center",
 
-            render: (mass) => (
-              <ApproveRejectButtons mass={mass as unknown as IMass} />
+            render: (confirmation) => (
+              <ApproveRejectButtons
+                confirmation={confirmation as unknown as IConfirmations}
+              />
             ),
           },
         ]}
@@ -149,4 +147,4 @@ const MassPage = () => {
   );
 };
 
-export default MassPage;
+export default ConfirmationPage;

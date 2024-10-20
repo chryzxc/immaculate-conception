@@ -10,7 +10,11 @@ type TPageContentProps = {
 const PageContent = ({ children, title }: TPageContentProps) => {
   return (
     <Container fluid w={"100%"}>
-      {title && <Text>{title}</Text>}
+      {title && (
+        <Text mb="md" fw={700} size="lg">
+          {title}
+        </Text>
+      )}
       {children}
     </Container>
   );

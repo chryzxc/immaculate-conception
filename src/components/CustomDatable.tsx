@@ -55,9 +55,8 @@ export default function CustomDatatable({
         </Group>
       )}
       <DataTable
-        height={300}
         {...otherProps}
-        records={tableRecords}
+        records={[...tableRecords].reverse()}
         totalRecords={records.length}
         recordsPerPage={pageSize}
         page={page}

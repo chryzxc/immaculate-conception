@@ -16,40 +16,50 @@ import {
   useFetchAll,
   useUpdate,
 } from "../hooks/useFirebaseFetcher";
-
+import { DatePickerInput } from "@mantine/dates";
 import CustomDatatable from "../components/CustomDatable";
-import { IAnnouncement } from "../database";
+import { IWeddingAnnouncement } from "../database";
 import PageContent from "../components/PageContent";
 import TextEditor from "../components/TextEditor";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toStandardDateFormat } from "../utils";
+import dayjs from "dayjs";
 
-interface IAnnouncementDrawer {
+interface IWeddingAnnouncementDrawer {
   opened: boolean;
   onClose: () => void;
-  selectedAnnouncement: IAnnouncement | null;
+  selectedWeddingAnnouncement: IWeddingAnnouncement | null;
 }
 
-const AnnouncementDrawer = ({
+export const isNotExpired = (expirationDate: string | Date) =>
+  expirationDate > new Date().toISOString();
+
+const WeddingAnnouncementDrawer = ({
   onClose,
   opened,
-  selectedAnnouncement,
-}: IAnnouncementDrawer) => {
-  const { mutate: addAnnouncement, isPending: isAdding } =
-    useCreate("announcements");
-  const { mutate: updateAnnouncement, isPending: isUpdating } =
-    useUpdate("announcements");
+  selectedWeddingAnnouncement,
+}: IWeddingAnnouncementDrawer) => {
+  const { mutate: addWeddingAnnouncement, isPending: isAdding } = useCreate(
+    "weddingAnnouncements"
+  );
+  const { mutate: updateWeddingAnnouncement, isPending: isUpdating } =
+    useUpdate("weddingAnnouncements");
 
   const [content, setContent] = useState<string>(
-    selectedAnnouncement?.content || ""
+    selectedWeddingAnnouncement?.content || ""
+  );
+  const [expirationDate, setExpirationDate] = useState<Date | null>(
+    selectedWeddingAnnouncement
+      ? new Date(selectedWeddingAnnouncement.expiration)
+      : null
   );
 
   const isLoading = isAdding || isUpdating;
 
   const getSubmitLabel = () => {
-    if (selectedAnnouncement) {
+    if (selectedWeddingAnnouncement) {
       return isUpdating ? "Updating announcement..." : "Update announcement";
     } else {
       return isAdding ? "Adding announcement..." : "Add announcement";
@@ -58,30 +68,33 @@ const AnnouncementDrawer = ({
 
   const handleSubmit = async () => {
     try {
-      if (selectedAnnouncement) {
-        if (!selectedAnnouncement.id) {
+      if (selectedWeddingAnnouncement) {
+        if (!selectedWeddingAnnouncement.id) {
           throw new Error("Selected announcement has no id");
         }
-        await updateAnnouncement({
-          id: selectedAnnouncement.id,
-          data: { content },
+        await updateWeddingAnnouncement({
+          id: selectedWeddingAnnouncement.id,
+          data: { content, expiration: expirationDate?.toISOString() },
         });
         onClose();
 
         notifications.show({
           title: "Success",
-          message: "Announcement updated",
+          message: "WeddingAnnouncement updated",
           color: "green",
         });
       } else {
-        if (!content) {
-          throw new Error("Announcement cannot be empty");
+        if (!content || !expirationDate) {
+          throw new Error("WeddingAnnouncement cannot be empty");
         }
-        await addAnnouncement({ content });
+        await addWeddingAnnouncement({
+          content,
+          expiration: expirationDate.toISOString(),
+        });
         onClose();
         notifications.show({
           title: "Success",
-          message: "Announcement added",
+          message: "WeddingAnnouncement added",
           color: "green",
         });
       }
@@ -94,10 +107,13 @@ const AnnouncementDrawer = ({
     }
   };
 
-  // useEffect(() => {
-  //   setContent(selectedAnnouncement?.content || "");
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [selectedAnnouncement]);
+  useEffect(() => {
+    if (selectedWeddingAnnouncement) {
+      setExpirationDate(new Date(selectedWeddingAnnouncement.expiration));
+    } else {
+      setExpirationDate(null);
+    }
+  }, [selectedWeddingAnnouncement]);
 
   return (
     <Drawer
@@ -105,14 +121,24 @@ const AnnouncementDrawer = ({
       onClose={onClose}
       title={
         <Text fw="bold">
-          {selectedAnnouncement ? "Edit announcement" : "Add announcement"}
+          {selectedWeddingAnnouncement
+            ? "Edit wedding announcement"
+            : "Add wedding announcement"}
         </Text>
       }
       position="right"
     >
       <Stack>
+        <DatePickerInput
+          minDate={dayjs().toDate()}
+          label="Expiration date"
+          placeholder="Pick date"
+          value={expirationDate}
+          onChange={setExpirationDate}
+        />
         <TextEditor
-          content={selectedAnnouncement?.content || content}
+          label="Content"
+          content={selectedWeddingAnnouncement?.content || content}
           onChange={setContent}
         />
         <Button type="submit" loading={isLoading} onClick={handleSubmit}>
@@ -123,26 +149,28 @@ const AnnouncementDrawer = ({
   );
 };
 
-const AnnouncementPage = () => {
-  const [selectedAnnouncement, setSelectedAnnouncement] =
-    useState<IAnnouncement | null>(null);
+const WeddingPage = () => {
+  const [selectedWeddingAnnouncement, setSelectedWeddingAnnouncement] =
+    useState<IWeddingAnnouncement | null>(null);
   const [opened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
 
-  const { data: announcements = [], isLoading } = useFetchAll("announcements");
-  const { mutate: deleteMutation } = useDelete("announcements");
+  const { data: announcements = [], isLoading } = useFetchAll(
+    "weddingAnnouncements"
+  );
+  const { mutate: deleteMutation } = useDelete("weddingAnnouncements");
 
-  const editAnnouncement = (announcement: IAnnouncement) => {
-    setSelectedAnnouncement(announcement);
+  const editWeddingAnnouncement = (announcement: IWeddingAnnouncement) => {
+    setSelectedWeddingAnnouncement(announcement);
     openDrawer();
   };
 
-  const deleteAnnouncement = async (id: string) => {
+  const deleteWeddingAnnouncement = async (id: string) => {
     try {
       await deleteMutation(id);
       notifications.show({
         title: "Success",
-        message: "Announcement deleted",
+        message: "WeddingAnnouncement deleted",
         color: "green",
       });
     } catch (e) {
@@ -155,22 +183,32 @@ const AnnouncementPage = () => {
   };
 
   return (
-    <PageContent>
+    <PageContent title="Wedding">
       <CustomDatatable
         fetching={isLoading}
         columns={[
           {
             accessor: "content",
             render: (announcement) => {
-              const announcementRow = announcement as IAnnouncement;
+              const announcementRow = announcement as IWeddingAnnouncement;
               return <TextEditor readonly content={announcementRow.content} />;
             },
           },
           {
-            accessor: "created",
-            width: 200,
+            accessor: "expiration",
+            width: 250,
             render: (announcement) => {
-              const announcementRow = announcement as IAnnouncement;
+              const announcementRow = announcement as IWeddingAnnouncement;
+              return (
+                <Text>{toStandardDateFormat(announcementRow.expiration)}</Text>
+              );
+            },
+          },
+          {
+            accessor: "created",
+            width: 250,
+            render: (announcement) => {
+              const announcementRow = announcement as IWeddingAnnouncement;
               return (
                 <Text>{toStandardDateFormat(announcementRow.created)}</Text>
               );
@@ -182,21 +220,26 @@ const AnnouncementPage = () => {
             title: "Actions",
             textAlign: "center",
             render: (announcement) => {
-              const rowAnnouncement = announcement as IAnnouncement;
+              const rowWeddingAnnouncement =
+                announcement as IWeddingAnnouncement;
               return (
                 <Group justify="center">
                   <Tooltip label="Edit announcement">
                     <ActionIcon
-                      onClick={() => editAnnouncement(rowAnnouncement)}
+                      onClick={() =>
+                        editWeddingAnnouncement(rowWeddingAnnouncement)
+                      }
                     >
                       <IconPencil />
                     </ActionIcon>
                   </Tooltip>
-                  {rowAnnouncement.id && (
+                  {rowWeddingAnnouncement.id && (
                     <Tooltip label="Delete announcement">
                       <ActionIcon
                         onClick={() =>
-                          deleteAnnouncement(String(rowAnnouncement.id))
+                          deleteWeddingAnnouncement(
+                            String(rowWeddingAnnouncement.id)
+                          )
                         }
                         color="red"
                       >
@@ -209,7 +252,9 @@ const AnnouncementPage = () => {
             },
           },
         ]}
-        records={announcements}
+        records={announcements.filter((announcement) =>
+          isNotExpired(announcement.expiration)
+        )}
         withTableBorder
         withColumnBorders
         onDeleteRecords={() => {}}
@@ -221,16 +266,16 @@ const AnnouncementPage = () => {
           </Group>
         }
       />
-      <AnnouncementDrawer
+      <WeddingAnnouncementDrawer
         onClose={() => {
-          setSelectedAnnouncement(null);
+          setSelectedWeddingAnnouncement(null);
           closeDrawer();
         }}
         opened={opened}
-        selectedAnnouncement={selectedAnnouncement}
+        selectedWeddingAnnouncement={selectedWeddingAnnouncement}
       />
     </PageContent>
   );
 };
 
-export default AnnouncementPage;
+export default WeddingPage;

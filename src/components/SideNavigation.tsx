@@ -1,7 +1,6 @@
 import {
   IconBellRinging,
   IconBuildingChurch,
-  IconCalendarCheck,
   IconCheck,
   IconCross,
   IconDroplet,
@@ -12,9 +11,9 @@ import {
 } from "@tabler/icons-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import classes from "../styles/SideNavigation.module.css";
 import { routes } from "../constants/routes";
 import useUserStore from "../store/user";
+import classes from "../styles/SideNavigation.module.css";
 
 const data = [
   { link: routes.dashboard, label: "Dashboard", icon: IconLayoutDashboard },
@@ -24,7 +23,7 @@ const data = [
   { link: routes.confirmation, label: "Confirmations", icon: IconCheck },
   { link: routes.wedding, label: "Wedding", icon: IconHeart },
   { link: routes.funeral, label: "Funeral", icon: IconFlower },
-  { link: routes.schedules, label: "Schedules", icon: IconCalendarCheck },
+  // { link: routes.schedules, label: "Schedules", icon: IconCalendarCheck },
   { link: routes.announcements, label: "Announcements", icon: IconBellRinging },
 ];
 

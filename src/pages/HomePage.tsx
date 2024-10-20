@@ -18,6 +18,8 @@ import logoImg from "../assets/logo.png";
 import { routes } from "../constants/routes";
 import { useFetchAll } from "../hooks/useFirebaseFetcher";
 import { useNavigate } from "react-router-dom";
+import { toStandardDateFormat } from "../utils";
+import { isNotExpired } from "./WeddingPage";
 
 const SectionContainer = ({
   children,
@@ -27,14 +29,16 @@ const SectionContainer = ({
   children: React.ReactNode;
 }) => {
   return (
-    <Box w="100%">
-      <Box mb="md">
-        <Text size="xl" fw="bold" color="white">
-          {title}
-        </Text>
+    <Stack px="lg" py="xl" w="100%">
+      <Box w="100%">
+        <Box mb="md">
+          <Text size="xl" fw="bold" color="white">
+            {title}
+          </Text>
+        </Box>
+        {children}
       </Box>
-      {children}
-    </Box>
+    </Stack>
   );
 };
 
@@ -47,16 +51,33 @@ const Announcements = () => {
           <Card key={index} w="100%">
             <TextEditor readonly content={announcement.content} />
           </Card>
-          //   <Blockquote
-          //     cite="-Mathew 1:23"
-          //     mt="lg"
-          //     color="white"
-          //     styles={{ root: { color: "white" } }}
-          //   >
-          //     Behold a virgin shall conceive and bear a son and his name shall
-          //     be called Emmanuel' (which means, God is with us)
-          //   </Blockquote>
-        ))}{" "}
+        ))}
+      </Stack>
+    </SectionContainer>
+  );
+};
+
+const WeddingAnnouncements = () => {
+  const { data: weddingAnnouncements = [] } = useFetchAll(
+    "weddingAnnouncements"
+  );
+  const notExpiredAnnouncements = weddingAnnouncements.filter((announcement) =>
+    isNotExpired(announcement.expiration)
+  );
+
+  if (!notExpiredAnnouncements.length) return null;
+
+  return (
+    <SectionContainer title="Marriage Notice">
+      <Stack>
+        {notExpiredAnnouncements.map((weddingAnnouncement, index) => (
+          <Card key={index} w="100%">
+            <Text className="text-gray-400">
+              Date posted: {toStandardDateFormat(weddingAnnouncement.created)}
+            </Text>
+            <TextEditor readonly content={weddingAnnouncement.content} />
+          </Card>
+        ))}
       </Stack>
     </SectionContainer>
   );
@@ -89,7 +110,7 @@ export default function HomePage() {
 
       <AppShell.Main h="100vh">
         <div className={classes.wrapper}>
-          <ScrollArea h={`85vh`}>
+          <ScrollArea h={`90vh`}>
             <Container fluid>
               <Flex direction={{ base: "column", md: "row" }} gap={40}>
                 <Box
@@ -151,9 +172,8 @@ export default function HomePage() {
                   }}
                   align={{ xl: "flex-end" }}
                 >
-                  <Stack px="lg" py="xl" w="100%">
-                    <Announcements />
-                  </Stack>
+                  <WeddingAnnouncements />
+                  <Announcements />
                 </Flex>
               </Flex>
               {/* <SimpleGrid cols={{ base: 1, sm: 2 }}>

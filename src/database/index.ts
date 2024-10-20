@@ -9,7 +9,7 @@ import {
   update,
 } from "firebase/database";
 
-import { MassAppointmentStatusEnum } from "../enums";
+import { AppointmentStatusEnum } from "../enums";
 import app from "./config";
 
 const database = getDatabase(app);
@@ -17,6 +17,9 @@ const database = getDatabase(app);
 export type TDBPaths =
   | "priests"
   | "massAppointments"
+  | "baptismAppointment"
+  | "confirmationAppointment"
+  | "weddingAnnouncements"
   | "masses"
   | "schedules"
   | "announcements";
@@ -28,7 +31,9 @@ export interface IBaseEntity {
 }
 
 export interface IPriest extends IBaseEntity {
+  authId: string | null;
   name: string;
+  phoneNumber: string;
 }
 
 export interface IMass extends IBaseEntity {
@@ -37,8 +42,38 @@ export interface IMass extends IBaseEntity {
   name: string;
   place: string;
   time: string;
-  status: MassAppointmentStatusEnum;
+  status: AppointmentStatusEnum;
   priestId: string;
+}
+
+export interface IBaptism extends IBaseEntity {
+  address: string;
+  baptismDate: string;
+  baptismPlace: string;
+  baptismSponsors: string;
+  birthPlace: string;
+  birthdate: string;
+  child_sName: string;
+  father_sName: string;
+  parentsContactNumber: string;
+  status: AppointmentStatusEnum;
+}
+
+export interface IConfirmations extends IBaseEntity {
+  baptismDate: string;
+  birthPlace: string;
+  birthdate: string;
+  churchPlace: string;
+  email: string;
+  fatherName: string;
+  guardianNumber: string;
+  motherName: string;
+  name: string;
+  number: string;
+  sponsorName: string;
+  sponsorRelation: string;
+  purpose: string;
+  status: AppointmentStatusEnum;
 }
 
 export interface IParish extends IBaseEntity {
@@ -53,12 +88,20 @@ export interface IAnnouncement extends IBaseEntity {
   content: string;
 }
 
+export interface IWeddingAnnouncement extends IBaseEntity {
+  content: string;
+  expiration: string | Date;
+}
+
 export type TDBEntities = {
   priests: IPriest;
   massAppointments: IMass;
+  baptismAppointment: IBaptism;
+  confirmationAppointment: IConfirmations;
   masses: IMass;
   schedules: ISchedule;
   announcements: IAnnouncement;
+  weddingAnnouncements: IWeddingAnnouncement;
 };
 
 export type FirebaseDatabaseReturn<T extends TDBPaths> = {

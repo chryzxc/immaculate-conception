@@ -3,28 +3,38 @@ import {
   Button,
   Drawer,
   Group,
+  Input,
   Stack,
   Text,
   TextInput,
   Tooltip,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+  PhoneAuthProvider,
+  RecaptchaVerifier,
+  signInWithCredential,
+  signInWithPhoneNumber,
+  UserCredential,
+} from "firebase/auth";
+import { zodResolver } from "mantine-form-zod-resolver";
+import { useEffect, useState } from "react";
+import { IMaskInput } from "react-imask";
+import { z } from "zod";
+import CustomDatatable from "../components/CustomDatable";
+import PageContent from "../components/PageContent";
+import { IPriest } from "../database";
+import { auth } from "../database/config";
 import {
   useCreate,
   useDelete,
   useFetchAll,
   useUpdate,
 } from "../hooks/useFirebaseFetcher";
-import { useEffect, useState } from "react";
-
-import CustomDatatable from "../components/CustomDatable";
-import { IPriest } from "../database";
-import PageContent from "../components/PageContent";
-import { notifications } from "@mantine/notifications";
-import { useDisclosure } from "@mantine/hooks";
-import { useForm } from "@mantine/form";
-import { z } from "zod";
-import { zodResolver } from "mantine-form-zod-resolver";
+import { toStandardDateFormat } from "../utils";
 
 interface IPriestDrawer {
   opened: boolean;
@@ -32,15 +42,30 @@ interface IPriestDrawer {
   selectedPriest: IPriest | null;
 }
 
+const PHONE_NUMBER_MASK = "+63 000-0000-000";
+
 const schema = z.object({
   name: z.string().min(2, { message: "Name should have at least 2 letters" }),
+  phoneNumber: z
+    .string()
+    .min(PHONE_NUMBER_MASK.length, {
+      message: "Phone number should have 13 characters",
+    })
+    .max(PHONE_NUMBER_MASK.length, {
+      message: "Phone number should have 13 characters",
+    }),
 });
 
 const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
+  const [otp, setOtp] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [verifiyingOtp, setVerifyingOtp] = useState(false);
+
   const form = useForm({
     mode: "uncontrolled",
     initialValues: {
       name: selectedPriest?.name || "",
+      phoneNumber: selectedPriest?.phoneNumber || "",
     },
     validate: zodResolver(schema),
   });
@@ -58,13 +83,54 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
     }
   };
 
+  const setUpRecaptcha = () => {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: (response) => {
+          console.log("Recaptcha resolved");
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        },
+      }
+    );
+  };
+
+  const clearValues = () => {
+    setVerificationId("");
+    setOtp("");
+    form.reset();
+  };
+
   const handleSubmit = async () => {
+    if (
+      !selectedPriest?.phoneNumber ||
+      selectedPriest.phoneNumber !== form.getValues().phoneNumber
+    ) {
+      sendVerificationCode();
+    } else {
+      upsertPriest();
+    }
+  };
+
+  const upsertPriest = async (userAuthId?: string) => {
+    const partialPriestData: Partial<IPriest> = {
+      authId: userAuthId || null,
+    };
+
     try {
       if (selectedPriest) {
         if (!selectedPriest.id) {
           throw new Error("Selected priest has no id");
         }
-        await updatePriest({ id: selectedPriest.id, data: form.getValues() });
+        await updatePriest({
+          id: selectedPriest.id,
+          data: {
+            ...form.getValues(),
+            ...partialPriestData,
+          },
+        });
         onClose();
 
         notifications.show({
@@ -73,7 +139,11 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
           color: "green",
         });
       } else {
-        await addPriest(form.getValues());
+        await addPriest({
+          ...form.getValues(),
+          ...partialPriestData,
+        });
+        clearValues();
         onClose();
         notifications.show({
           title: "Success",
@@ -90,8 +160,43 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
     }
   };
 
+  const sendVerificationCode = () => {
+    setUpRecaptcha();
+    const appVerifier = window.recaptchaVerifier;
+
+    signInWithPhoneNumber(auth, form.getValues().phoneNumber, appVerifier)
+      .then((confirmationResult) => {
+        setVerificationId(confirmationResult.verificationId);
+        console.log("OTP sent");
+      })
+      .catch((error) => {
+        console.error("Error sending OTP", error);
+      });
+  };
+
+  const handleVerifyOtp = async () => {
+    setVerifyingOtp(true);
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
+    try {
+      const userAuth = await signInWithCredential(auth, credential);
+
+      upsertPriest(userAuth?.user.uid);
+    } catch (e) {
+      notifications.show({
+        title: "Failed to verify OTP",
+        message: String(e),
+        color: "red",
+      });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   useEffect(() => {
-    form.setValues({ name: selectedPriest?.name || "" });
+    form.setValues({
+      name: selectedPriest?.name || "",
+      phoneNumber: selectedPriest?.phoneNumber || "",
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPriest]);
 
@@ -104,19 +209,48 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
       }
       position="right"
     >
+      <div id="recaptcha-container"></div>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          <TextInput
-            label="Name"
-            placeholder="Enter priest name"
-            withAsterisk
-            key={form.key("name")}
-            {...form.getInputProps("name")}
-          />
+          {!verificationId ? (
+            <>
+              <TextInput
+                label="Name"
+                placeholder="Enter priest name"
+                withAsterisk
+                key={form.key("name")}
+                {...form.getInputProps("name")}
+              />
+              <Input.Wrapper
+                label="Phone Number"
+                {...form.getInputProps("phoneNumber")}
+              >
+                <Input
+                  component={IMaskInput}
+                  mask={PHONE_NUMBER_MASK}
+                  placeholder="Enter phone number"
+                  {...form.getInputProps("phoneNumber")}
+                />
+              </Input.Wrapper>
+              <Button type="submit" loading={isLoading}>
+                {getSubmitLabel()}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Input.Wrapper label="OTP Code">
+                <Input
+                  placeholder="Enter the OTP code sent to the provided number"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+              </Input.Wrapper>
 
-          <Button type="submit" loading={isLoading}>
-            {getSubmitLabel()}
-          </Button>
+              <Button loading={verifiyingOtp} onClick={handleVerifyOtp}>
+                {verifiyingOtp ? "Verifying OTP..." : "Verify OTP"}
+              </Button>
+            </>
+          )}
         </Stack>
       </form>
     </Drawer>
@@ -159,9 +293,19 @@ const PriestPage = () => {
         fetching={isLoading}
         columns={[
           { accessor: "name" },
+          { accessor: "phoneNumber" },
+          {
+            accessor: "created",
+            width: 300,
+            render: (priest) => {
+              const priestRow = priest as IPriest;
+              return <Text>{toStandardDateFormat(priestRow.created)}</Text>;
+            },
+          },
           {
             accessor: "",
             title: "Actions",
+
             textAlign: "center",
             render: (priest) => {
               const rowPriest = priest as IPriest;
@@ -190,7 +334,6 @@ const PriestPage = () => {
         records={priests}
         withTableBorder
         withColumnBorders
-        onDeleteRecords={() => {}}
         actionComponent={
           <Group>
             <Button leftSection={<IconPlus />} onClick={openDrawer}>

@@ -42,8 +42,8 @@ export const useUpdate = <T extends keyof TDBEntities>(path: T) => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<TDBEntities[T]> }) =>
       db.patch(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: [path, id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [path] });
     },
   });
 };

@@ -1,12 +1,13 @@
 import { AppShell, Burger, Group, Image, Text } from "@mantine/core";
 import { Outlet, useNavigate } from "react-router-dom";
 
-import SideNavigation from "./SideNavigation";
-import logoImg from "../assets/logo.png";
-import { routes } from "../constants/routes";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
+import logoImg from "../assets/logo.png";
+import { routes } from "../constants/routes";
 import useUserStore from "../store/user";
+import Notifications from "./Notifications";
+import SideNavigation from "./SideNavigation";
 
 const Layout = () => {
   const { user } = useUserStore();
@@ -30,12 +31,21 @@ const Layout = () => {
       padding="md"
     >
       <AppShell.Header styles={{ header: { backgroundColor: "primary" } }}>
-        <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Image src={logoImg} alt="Logo" style={{ height: 55, width: 55 }} />
-          <Text fw={"bold"} color="secondary">
-            Guiuan Immaculate Conception Parish Church
-          </Text>
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Image src={logoImg} alt="Logo" style={{ height: 55, width: 55 }} />
+            <Text fw={"bold"} color="secondary" className="hidden md:block">
+              Guiuan Immaculate Conception Parish Church
+            </Text>
+          </Group>
+
+          <Notifications />
         </Group>
       </AppShell.Header>
       <AppShell.Navbar>
