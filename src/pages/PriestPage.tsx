@@ -18,7 +18,6 @@ import {
   RecaptchaVerifier,
   signInWithCredential,
   signInWithPhoneNumber,
-  UserCredential,
 } from "firebase/auth";
 import { zodResolver } from "mantine-form-zod-resolver";
 import { useEffect, useState } from "react";
@@ -84,12 +83,13 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
   };
 
   const setUpRecaptcha = () => {
-    window.recaptchaVerifier = new RecaptchaVerifier(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(
       auth,
       "recaptcha-container",
       {
         size: "invisible",
-        callback: (response) => {
+        callback: () => {
           console.log("Recaptcha resolved");
           // reCAPTCHA solved, allow signInWithPhoneNumber.
         },
@@ -140,7 +140,7 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
         });
       } else {
         await addPriest({
-          ...form.getValues(),
+          ...(form.getValues() as IPriest),
           ...partialPriestData,
         });
         clearValues();
@@ -162,8 +162,8 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
 
   const sendVerificationCode = () => {
     setUpRecaptcha();
-    const appVerifier = window.recaptchaVerifier;
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const appVerifier = (window as any).recaptchaVerifier;
     signInWithPhoneNumber(auth, form.getValues().phoneNumber, appVerifier)
       .then((confirmationResult) => {
         setVerificationId(confirmationResult.verificationId);

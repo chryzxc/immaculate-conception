@@ -1,8 +1,6 @@
 import { BarChart, DonutChart } from "@mantine/charts";
 import { Group, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import {
-  IconArrowDownRight,
-  IconArrowUpRight,
   IconBuildingChurch,
   IconDroplet,
   IconFlower,
@@ -13,8 +11,8 @@ import locale from "dayjs/plugin/localeData";
 import { useMemo } from "react";
 import PageContent from "../components/PageContent";
 import { IMass } from "../database";
-import classes from "../styles/Dashboard.module.css";
 import { useFetchAll } from "../hooks/useFirebaseFetcher";
+import classes from "../styles/Dashboard.module.css";
 
 interface IDataProps {
   mass: IMass[];
@@ -129,7 +127,7 @@ const Statistics = ({ baptism, funeral, mass, wedding }: IDataProps) => {
 
   const stats = data.map((stat) => {
     const Icon = stat.icon;
-    const DiffIcon = stat.diff > 0 ? IconArrowUpRight : IconArrowDownRight;
+    // const DiffIcon = stat.diff > 0 ? IconArrowUpRight : IconArrowDownRight;
 
     return (
       <Paper withBorder p="md" radius="md" key={stat.title}>
