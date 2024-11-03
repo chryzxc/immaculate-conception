@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 interface IUser {
   id: string;
   name: string;
+  isSuperAdmin: boolean;
 }
 
 interface IUserState {

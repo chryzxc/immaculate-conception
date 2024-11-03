@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Blockquote,
   Box,
@@ -5,28 +6,67 @@ import {
   Group,
   Paper,
   PasswordInput,
+  rem,
   Text,
   TextInput,
   Title,
 } from "@mantine/core";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 import classes from "../styles/Login.module.css";
-import { routes } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../store/user";
+import { auth } from "../database/config";
+import { searchByKey } from "../hooks/useFirebaseFetcher";
+import { IPriest } from "../database";
+import { getHotkeyHandler } from "@mantine/hooks";
+import { IconAt, IconLock } from "@tabler/icons-react";
+
+const ICON_SIZE = { width: rem(16), height: rem(16) };
 
 export default function LoginPage() {
   const { setUser, user } = useUserStore();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    setUser({ id: "", name: "" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<null | string>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const loggedInUser = userCredential.user;
+      const priestResults = (await searchByKey(
+        "priests",
+        "authId",
+        loggedInUser.uid
+      )) as IPriest[];
+
+      setUser({
+        id: loggedInUser.uid,
+        name: priestResults?.[0]?.name || "Admin",
+        isSuperAdmin: !priestResults.length,
+      });
+      navigate(ROUTES.dashboard);
+    } catch (error) {
+      const err = error as { message: string };
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     if (user) {
-      navigate(routes.dashboard);
+      navigate(ROUTES.dashboard);
     }
   }, [user, navigate]);
 
@@ -45,41 +85,52 @@ export default function LoginPage() {
           </Title>
 
           <TextInput
+            id="email"
+            type="email"
             label="Email address"
-            placeholder="hello@gmail.com"
+            placeholder="Enter your email"
             size="md"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={getHotkeyHandler([["Enter", handleLogin]])}
+            leftSection={<IconAt style={ICON_SIZE} />}
           />
           <PasswordInput
+            id="password"
             label="Password"
-            placeholder="Your password"
+            placeholder="Enter your password"
             mt="md"
             size="md"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={getHotkeyHandler([["Enter", handleLogin]])}
+            leftSection={<IconLock style={ICON_SIZE} />}
           />
 
+          {error && (
+            <Text color="red" mt="sm">
+              {error}
+            </Text>
+          )}
+
           <div className="flex flex-col gap-2 mt-6">
-            <Button fullWidth size="md" onClick={handleLogin}>
+            <Button
+              fullWidth
+              size="md"
+              onClick={handleLogin}
+              loading={isLoading}
+            >
               Login
             </Button>
             <Button
               fullWidth
               size="md"
               variant="outline"
-              onClick={() => navigate(routes.home)}
+              onClick={() => navigate(ROUTES.home)}
             >
               Go to Home
             </Button>
           </div>
-
-          {/* <Text ta="center" mt="md">
-            Don&apos;t have an account?{" "}
-            <Anchor<"a">
-              href="#"
-              fw={700}
-              onClick={(event) => event.preventDefault()}
-            >
-              Register
-            </Anchor>
-          </Text> */}
         </Paper>
         <div
           style={{

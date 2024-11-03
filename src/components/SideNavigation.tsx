@@ -11,20 +11,20 @@ import {
 } from "@tabler/icons-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { routes } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
 import useUserStore from "../store/user";
 import classes from "../styles/SideNavigation.module.css";
 
 const data = [
-  { link: routes.dashboard, label: "Dashboard", icon: IconLayoutDashboard },
-  { link: routes.priests, label: "Priests", icon: IconCross },
-  { link: routes.mass, label: "Mass", icon: IconBuildingChurch },
-  { link: routes.baptism, label: " Baptism", icon: IconDroplet },
-  { link: routes.confirmation, label: "Confirmations", icon: IconCheck },
-  { link: routes.wedding, label: "Wedding", icon: IconHeart },
-  { link: routes.funeral, label: "Funeral", icon: IconFlower },
-  // { link: routes.schedules, label: "Schedules", icon: IconCalendarCheck },
-  { link: routes.announcements, label: "Announcements", icon: IconBellRinging },
+  { link: ROUTES.dashboard, label: "Dashboard", icon: IconLayoutDashboard },
+  { link: ROUTES.priests, label: "Priests", icon: IconCross },
+  { link: ROUTES.mass, label: "Mass", icon: IconBuildingChurch },
+  { link: ROUTES.baptism, label: " Baptism", icon: IconDroplet },
+  { link: ROUTES.confirmation, label: "Confirmations", icon: IconCheck },
+  { link: ROUTES.wedding, label: "Wedding", icon: IconHeart },
+  { link: ROUTES.funeral, label: "Funeral", icon: IconFlower },
+  // { link: ROUTES.schedules, label: "Schedules", icon: IconCalendarCheck },
+  { link: ROUTES.announcements, label: "Announcements", icon: IconBellRinging },
 ];
 
 export default function SideNavigation() {
@@ -38,8 +38,8 @@ export default function SideNavigation() {
   };
 
   const isActive = (link: string) => {
-    if (link === routes.dashboard)
-      return location?.pathname === routes.dashboard;
+    if (link === ROUTES.dashboard)
+      return location?.pathname === ROUTES.dashboard;
 
     return location?.pathname.includes(link);
   };

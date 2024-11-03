@@ -15,7 +15,7 @@ import {
 import TextEditor from "../components/TextEditor";
 import classes from "../styles/Home.module.css";
 import logoImg from "../assets/logo.png";
-import { routes } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
 import { useFetchAll } from "../hooks/useFirebaseFetcher";
 import { useNavigate } from "react-router-dom";
 import { toStandardDateFormat } from "../utils";
@@ -104,7 +104,7 @@ export default function HomePage() {
               Guiuan Immaculate Conception Parish Church
             </Text>
           </div>
-          <Button onClick={() => navigate(routes.login)}>Login</Button>
+          <Button onClick={() => navigate(ROUTES.login)}>Login</Button>
         </Group>
       </AppShell.Header>
 

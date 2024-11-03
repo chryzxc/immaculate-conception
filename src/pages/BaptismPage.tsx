@@ -7,8 +7,10 @@ import dayjs from "dayjs";
 import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
-import { IBaptism } from "../database";
-import { AppointmentStatusEnum } from "../enums";
+import { IBaptism, IBaptismRequestForm } from "../database";
+import { RequestFormStatusEnum, StatusEnum } from "../enums";
+import { TableReadyButton } from "../components/TableActions";
+import { toStandardDateFormat } from "../utils";
 
 const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
   const { mutate: updateBaptism, isPending: isUpdating } =
@@ -19,7 +21,7 @@ const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
       if (!baptism.id) return;
       await updateBaptism({
         id: baptism.id,
-        data: { status: AppointmentStatusEnum.APPROVED },
+        data: { status: StatusEnum.APPROVED },
       });
       notifications.show({
         title: "Success",
@@ -40,7 +42,7 @@ const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
       if (!baptism.id) return;
       await updateBaptism({
         id: baptism.id,
-        data: { status: AppointmentStatusEnum.REJECTED },
+        data: { status: StatusEnum.REJECTED },
       });
       notifications.show({
         title: "Success",
@@ -56,7 +58,7 @@ const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
     }
   };
 
-  if (baptism.status !== AppointmentStatusEnum.PENDING) {
+  if (baptism.status !== StatusEnum.PENDING && !!baptism.status) {
     return null;
   }
 
@@ -89,6 +91,36 @@ const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
 const BaptismPage = () => {
   const { data: baptismes = [], isLoading } = useFetchAll("baptismAppointment");
 
+  const { data: baptismRequestForms = [], isLoading: isLoadingRequestForm } =
+    useFetchAll("baptismRequestForm");
+
+  const { mutate: updateBaptismRequstForm, isPending: isUpdatingRequestForm } =
+    useUpdate("baptismRequestForm");
+
+  const updateRequestFormStatus = async (
+    id: string,
+    status: RequestFormStatusEnum
+  ) => {
+    try {
+      if (!id) return;
+      await updateBaptismRequstForm({
+        id,
+        data: { status },
+      });
+      notifications.show({
+        title: "Success",
+        message: "Request form updated",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Failed to update",
+        message: String(e),
+        color: "red",
+      });
+    }
+  };
+
   return (
     <PageContent>
       <CustomDatatable
@@ -108,15 +140,17 @@ const BaptismPage = () => {
           {
             accessor: "baptismDate",
             title: "Date of baptism",
+
             render: (baptism) => {
               const { baptismDate } = baptism as IBaptism;
-              return <Text>{dayjs(baptismDate).format("dddd")}</Text>;
+              return <Text>{toStandardDateFormat(baptismDate, true)}</Text>;
             },
           },
           { accessor: "baptismSponsors", title: "Sponsors" },
 
           {
             accessor: "status",
+            width: 120,
             render: (baptism) => {
               const { status } = baptism as IBaptism;
               return <StatusBadge status={status} />;
@@ -125,12 +159,66 @@ const BaptismPage = () => {
           {
             accessor: "",
             title: "Actions",
-
+            width: 120,
             textAlign: "center",
 
             render: (baptism) => (
               <ApproveRejectButtons baptism={baptism as unknown as IBaptism} />
             ),
+          },
+        ]}
+      />
+      <CustomDatatable
+        title="Baptism Request Forms"
+        fetching={isLoadingRequestForm}
+        records={baptismRequestForms}
+        columns={[
+          { accessor: "name", title: "Name" },
+          { accessor: "mother", title: "Mother's Name" },
+          { accessor: "father", title: "Father's Name" },
+
+          {
+            accessor: "contactNumber",
+            title: "Contact Number",
+          },
+          {
+            accessor: "dateofBaptism",
+            title: "Date of Baptism",
+            render: (baptism) => {
+              const { dateOfBaptism } = baptism as IBaptismRequestForm;
+              return <Text>{dayjs(dateOfBaptism).format("dddd")}</Text>;
+            },
+          },
+          { accessor: "purpose", title: "Purpose" },
+          {
+            accessor: "",
+            title: "Actions",
+
+            textAlign: "center",
+
+            render: (data) => {
+              const baptism = data as IBaptismRequestForm;
+              return (
+                <TableReadyButton
+                  type="BaptismRequestForm"
+                  userId={baptism.userId}
+                  loading={isUpdatingRequestForm}
+                  status={baptism.status}
+                  onSetAsCollected={() =>
+                    updateRequestFormStatus(
+                      String(baptism.id),
+                      RequestFormStatusEnum.COLLECTED
+                    )
+                  }
+                  onSetAsReady={() =>
+                    updateRequestFormStatus(
+                      String(baptism.id),
+                      RequestFormStatusEnum.READY
+                    )
+                  }
+                />
+              );
+            },
           },
         ]}
       />

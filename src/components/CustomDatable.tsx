@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Button, Card, Group, Stack, Text } from "@mantine/core";
 import { ComponentProps, useEffect, useState } from "react";
 
 import { DataTable } from "mantine-datatable";
@@ -36,42 +36,48 @@ export default function CustomDatatable({
   }, [pageSize]);
 
   return (
-    <Stack>
-      {title && <Text fw={700}>{title}</Text>}
-      {(!!onDeleteRecords || !!actionComponent) && (
-        <Group justify="space-between">
-          {onDeleteRecords && (
-            <Button
-              disabled={!selectedRecords.length}
-              color="red"
-              leftSection={<IconTrash />}
-            >
-              {!selectedRecords.length
-                ? "Select records to delete"
-                : `Delete ${selectedRecords.length} ${selectedRecords.length > 1 ? "records" : "record"} `}
-            </Button>
-          )}
-          {actionComponent}
-        </Group>
-      )}
-      <DataTable
-        {...otherProps}
-        records={[...tableRecords].reverse()}
-        totalRecords={records.length}
-        recordsPerPage={pageSize}
-        page={page}
-        onPageChange={(p) => setPage(p)}
-        recordsPerPageOptions={PAGE_SIZES}
-        onRecordsPerPageChange={setPageSize}
-        striped
-        highlightOnHover
-        withTableBorder
-        withColumnBorders
-        {...(onDeleteRecords && {
-          selectedRecords,
-          onSelectedRecordsChange: setSelectedRecords,
-        })}
-      />
-    </Stack>
+    <Card shadow="lg" withBorder radius="md">
+      <Stack>
+        {title && (
+          <Text fw={700} size="lg" color="primary">
+            {title}
+          </Text>
+        )}
+        {(!!onDeleteRecords || !!actionComponent) && (
+          <Group justify="space-between">
+            {onDeleteRecords && (
+              <Button
+                disabled={!selectedRecords.length}
+                color="red"
+                leftSection={<IconTrash />}
+              >
+                {!selectedRecords.length
+                  ? "Select records to delete"
+                  : `Delete ${selectedRecords.length} ${selectedRecords.length > 1 ? "records" : "record"} `}
+              </Button>
+            )}
+            {actionComponent}
+          </Group>
+        )}
+        <DataTable
+          {...otherProps}
+          records={[...tableRecords].reverse()}
+          highlightOnHover
+          totalRecords={records.length}
+          recordsPerPage={pageSize}
+          page={page}
+          onPageChange={(p) => setPage(p)}
+          recordsPerPageOptions={PAGE_SIZES}
+          onRecordsPerPageChange={setPageSize}
+          striped
+          withTableBorder
+          withColumnBorders
+          {...(onDeleteRecords && {
+            selectedRecords,
+            onSelectedRecordsChange: setSelectedRecords,
+          })}
+        />
+      </Stack>
+    </Card>
   );
 }

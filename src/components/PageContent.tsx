@@ -1,4 +1,4 @@
-import { Container, Text } from "@mantine/core";
+import { Container, Stack, Text } from "@mantine/core";
 
 import React from "react";
 
@@ -15,7 +15,7 @@ const PageContent = ({ children, title }: TPageContentProps) => {
           {title}
         </Text>
       )}
-      {children}
+      <Stack gap={20}>{children}</Stack>
     </Container>
   );
 };

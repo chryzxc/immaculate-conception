@@ -59,3 +59,29 @@ export const useDelete = <T extends keyof TDBEntities>(path: T) => {
     },
   });
 };
+
+export const useSearchByKey = <T extends keyof TDBEntities>(
+  path: T,
+  key: keyof TDBEntities[T],
+  value: string | number
+) => {
+  const db = firebaseDatabase(path);
+
+  return useQuery({
+    queryFn: async () => {
+      const allData = await db.fetchAll();
+      return allData.filter((item: TDBEntities[T]) => item[key] === value);
+    },
+    queryKey: [path, "search", key, value],
+  });
+};
+
+export const searchByKey = async <T extends keyof TDBEntities>(
+  path: T,
+  key: keyof TDBEntities[T],
+  value: string | number
+) => {
+  const db = firebaseDatabase(path);
+  const allData = await db.fetchAll();
+  return allData.filter((item: TDBEntities[T]) => item[key] === value);
+};

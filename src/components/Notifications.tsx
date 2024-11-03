@@ -12,22 +12,40 @@ import {
 
 import { toStandardDateFormat } from "../utils";
 import { IconBell } from "@tabler/icons-react";
+import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
+import { INotification } from "../database";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../constants/routes";
 
-const Notification = () => {
-  const isRead = true;
+const Notification = ({ data }: { data: INotification }) => {
+  const { read, message, timestamp, type } = data;
+  const navigate = useNavigate();
+  const { mutate: updateNotification } = useUpdate("notification");
+
+  const handleViewNotification = () => {
+    if (!read) {
+      updateNotification({ id: String(data.id), data: { read: true } });
+    }
+
+    if (type === "MassAppointment") {
+      navigate(ROUTES.mass);
+    }
+  };
+
   return (
-    <Indicator offset={30} disabled={isRead}>
-      <div className="flex flex-row gap-4 items-center">
+    <Indicator offset={30} disabled={read}>
+      <div
+        className="flex flex-row gap-4 items-center hover:bg-gray-100 p-2 cursor-pointer"
+        onClick={handleViewNotification}
+      >
         <Avatar size={50} />
         <div>
-          <Text size="sm" color={isRead ? "dimmed" : undefined}>
+          {/* <Text size="sm" color={read ? "dimmed" : undefined}>
             Juan Pedro
-          </Text>
-          <Text color={isRead ? "dimmed" : undefined}>
-            Marriage appointment
-          </Text>
-          <Text size="xs" color="dimmed">
-            {toStandardDateFormat(new Date())}
+          </Text> */}
+          <Text color={read ? "dimmed" : undefined}>{message}</Text>
+          <Text size="sm" color="dimmed">
+            {toStandardDateFormat(timestamp)}
           </Text>
         </div>
       </div>
@@ -36,12 +54,22 @@ const Notification = () => {
 };
 
 const Notifications = () => {
+  const { data: notifications = [] } = useFetchAll("notification");
+
+  const filteredNotifications = notifications.filter(
+    (notification) => !!notification.userId && !notification.fromAdmin
+  );
+
+  const unreadNotifications = filteredNotifications.filter(
+    (notification) => !notification.read
+  );
+
   return (
     <Popover width={400} position="bottom" withArrow shadow="md">
       <Popover.Target>
         <Indicator
           inline
-          label="42"
+          label={unreadNotifications.length}
           size={26}
           color="red"
           mr="md"
@@ -61,13 +89,13 @@ const Notifications = () => {
       <Popover.Dropdown>
         <Box h="100%">
           <Text fw={700}>Notifications</Text>
-          <ScrollArea mah={500} mt="md">
-            <Stack h="100vh">
-              {Array.from({ length: 25 }).map(() => (
-                <Notification />
+          <ScrollArea.Autosize mah={500} mt="md">
+            <Stack>
+              {filteredNotifications.map((notification, idx) => (
+                <Notification data={notification} key={idx} />
               ))}
             </Stack>
-          </ScrollArea>
+          </ScrollArea.Autosize>
         </Box>
       </Popover.Dropdown>
     </Popover>

@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect } from "react";
 import logoImg from "../assets/logo.png";
-import { routes } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
 import useUserStore from "../store/user";
 import Notifications from "./Notifications";
 import SideNavigation from "./SideNavigation";
@@ -16,7 +16,7 @@ const Layout = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate(routes.login);
+      navigate(ROUTES.login);
     }
   }, [user, navigate]);
 
@@ -45,7 +45,10 @@ const Layout = () => {
             </Text>
           </Group>
 
-          <Notifications />
+          <Group>
+            <Text>{`${user?.isSuperAdmin ? user.name : `Father ${user?.name}`}`}</Text>
+            <Notifications />
+          </Group>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar>

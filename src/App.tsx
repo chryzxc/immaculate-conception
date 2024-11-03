@@ -1,5 +1,5 @@
-import "@mantine/core/styles.css";
 import "@mantine/core/styles.layer.css";
+import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "mantine-datatable/styles.layer.css";
 import "@mantine/charts/styles.css";
@@ -19,11 +19,12 @@ import LoginPage from "./pages/LoginPage";
 import { Notifications } from "@mantine/notifications";
 import PageNotFound from "./pages/PageNotFound";
 import PriestPage from "./pages/PriestPage";
-import { routes } from "./constants/routes";
+import { ROUTES } from "./constants/routes";
 import WeddingPage from "./pages/WeddingPage";
 import MassPage from "./pages/MassPage";
 import BaptismPage from "./pages/BaptismPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
+import FuneralPage from "./pages/FuneralPage";
 
 const queryClient = new QueryClient();
 
@@ -38,23 +39,24 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             {/* {user ? ( */}
             <Route element={<Layout />}>
-              <Route path={routes.dashboard} element={<DashboardPage />} />
-              <Route path={routes.priests} element={<PriestPage />} />
-              <Route path={routes.wedding} element={<WeddingPage />} />
-              <Route path={routes.mass} element={<MassPage />} />
-              <Route path={routes.baptism} element={<BaptismPage />} />
+              <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+              <Route path={ROUTES.priests} element={<PriestPage />} />
+              <Route path={ROUTES.wedding} element={<WeddingPage />} />
+              <Route path={ROUTES.mass} element={<MassPage />} />
+              <Route path={ROUTES.baptism} element={<BaptismPage />} />
               <Route
-                path={routes.confirmation}
+                path={ROUTES.confirmation}
                 element={<ConfirmationPage />}
               />
               <Route
-                path={routes.announcements}
+                path={ROUTES.announcements}
                 element={<AnnouncementPage />}
               />
+              <Route path={ROUTES.funeral} element={<FuneralPage />} />
               {/*  <Route path="/appointments" element={<AppointmentPage />} /> */}
             </Route>
             {/* ) : ( */}
-            <Route path={routes.login} element={<LoginPage />} />
+            <Route path={ROUTES.login} element={<LoginPage />} />
             {/* )} */}
           </Routes>
         </Router>

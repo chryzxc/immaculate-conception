@@ -34,7 +34,7 @@
     "dayjs": "^1.11.13",
     "firebase": "^10.13.0",
     "localforage": "^1.10.0",
-    "mantine-datatable": "^7.11.3",
+    "mantine-datatable": "^7.12.4",
     "mantine-form-zod-resolver": "^1.1.0",
     "match-sorter": "^6.3.4",
     "react": "^18.3.1",

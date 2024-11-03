@@ -1,14 +1,15 @@
 import { Badge } from "@mantine/core";
-import { AppointmentStatusEnum } from "../enums";
+import { StatusEnum } from "../enums";
 
-const StatusBadge = ({ status }: { status?: AppointmentStatusEnum | null }) => {
-  const colorMapping: Record<AppointmentStatusEnum, string> = {
+const StatusBadge = ({ status }: { status?: StatusEnum | null }) => {
+  const colorMapping: Record<StatusEnum, string> = {
     approved: "green",
     pending: "orange",
     rejected: "red",
   };
 
-  if (!status) return null;
+  if (!status)
+    return <Badge color={colorMapping.pending}>{StatusEnum.PENDING}</Badge>;
 
   return <Badge color={colorMapping[status]}>{String(status)}</Badge>;
 };

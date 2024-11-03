@@ -3,25 +3,17 @@ import {
   Button,
   Drawer,
   Group,
-  Input,
   Stack,
   Text,
   TextInput,
   Tooltip,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { useForm, zodResolver } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
-import {
-  PhoneAuthProvider,
-  RecaptchaVerifier,
-  signInWithCredential,
-  signInWithPhoneNumber,
-} from "firebase/auth";
-import { zodResolver } from "mantine-form-zod-resolver";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { IMaskInput } from "react-imask";
 import { z } from "zod";
 import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
@@ -41,30 +33,22 @@ interface IPriestDrawer {
   selectedPriest: IPriest | null;
 }
 
-const PHONE_NUMBER_MASK = "+63 000-0000-000";
-
 const schema = z.object({
   name: z.string().min(2, { message: "Name should have at least 2 letters" }),
-  phoneNumber: z
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z
     .string()
-    .min(PHONE_NUMBER_MASK.length, {
-      message: "Phone number should have 13 characters",
-    })
-    .max(PHONE_NUMBER_MASK.length, {
-      message: "Phone number should have 13 characters",
-    }),
+    .min(6, { message: "Password should be at least 6 characters" })
+    .optional(),
 });
 
 const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
-  const [otp, setOtp] = useState("");
-  const [verificationId, setVerificationId] = useState("");
-  const [verifiyingOtp, setVerifyingOtp] = useState(false);
-
   const form = useForm({
     mode: "uncontrolled",
     initialValues: {
       name: selectedPriest?.name || "",
-      phoneNumber: selectedPriest?.phoneNumber || "",
+      email: selectedPriest?.email || "",
+      password: "",
     },
     validate: zodResolver(schema),
   });
@@ -82,34 +66,30 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
     }
   };
 
-  const setUpRecaptcha = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {
-          console.log("Recaptcha resolved");
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        },
-      }
-    );
-  };
-
   const clearValues = () => {
-    setVerificationId("");
-    setOtp("");
     form.reset();
   };
 
   const handleSubmit = async () => {
-    if (
-      !selectedPriest?.phoneNumber ||
-      selectedPriest.phoneNumber !== form.getValues().phoneNumber
-    ) {
-      sendVerificationCode();
+    if (!selectedPriest) {
+      // Register new priest
+      const { email, password } = form.getValues();
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        await upsertPriest(userCredential.user.uid);
+      } catch (error) {
+        notifications.show({
+          title: "Failed to add priest",
+          message: String(error),
+          color: "red",
+        });
+      }
     } else {
+      // Update existing priest data
       upsertPriest();
     }
   };
@@ -140,9 +120,9 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
         });
       } else {
         await addPriest({
-          ...(form.getValues() as IPriest),
+          ...(form.getValues() as Partial<IPriest>),
           ...partialPriestData,
-        });
+        } as IPriest);
         clearValues();
         onClose();
         notifications.show({
@@ -160,44 +140,12 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
     }
   };
 
-  const sendVerificationCode = () => {
-    setUpRecaptcha();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appVerifier = (window as any).recaptchaVerifier;
-    signInWithPhoneNumber(auth, form.getValues().phoneNumber, appVerifier)
-      .then((confirmationResult) => {
-        setVerificationId(confirmationResult.verificationId);
-        console.log("OTP sent");
-      })
-      .catch((error) => {
-        console.error("Error sending OTP", error);
-      });
-  };
-
-  const handleVerifyOtp = async () => {
-    setVerifyingOtp(true);
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
-    try {
-      const userAuth = await signInWithCredential(auth, credential);
-
-      upsertPriest(userAuth?.user.uid);
-    } catch (e) {
-      notifications.show({
-        title: "Failed to verify OTP",
-        message: String(e),
-        color: "red",
-      });
-    } finally {
-      setVerifyingOtp(false);
-    }
-  };
-
   useEffect(() => {
     form.setValues({
       name: selectedPriest?.name || "",
-      phoneNumber: selectedPriest?.phoneNumber || "",
+      email: selectedPriest?.email || "",
+      password: "",
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPriest]);
 
   return (
@@ -209,48 +157,35 @@ const PriestDrawer = ({ onClose, opened, selectedPriest }: IPriestDrawer) => {
       }
       position="right"
     >
-      <div id="recaptcha-container"></div>
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          {!verificationId ? (
-            <>
-              <TextInput
-                label="Name"
-                placeholder="Enter priest name"
-                withAsterisk
-                key={form.key("name")}
-                {...form.getInputProps("name")}
-              />
-              <Input.Wrapper
-                label="Phone Number"
-                {...form.getInputProps("phoneNumber")}
-              >
-                <Input
-                  component={IMaskInput}
-                  mask={PHONE_NUMBER_MASK}
-                  placeholder="Enter phone number"
-                  {...form.getInputProps("phoneNumber")}
-                />
-              </Input.Wrapper>
-              <Button type="submit" loading={isLoading}>
-                {getSubmitLabel()}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Input.Wrapper label="OTP Code">
-                <Input
-                  placeholder="Enter the OTP code sent to the provided number"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                />
-              </Input.Wrapper>
-
-              <Button loading={verifiyingOtp} onClick={handleVerifyOtp}>
-                {verifiyingOtp ? "Verifying OTP..." : "Verify OTP"}
-              </Button>
-            </>
+          <TextInput
+            label="Name"
+            placeholder="Enter priest name"
+            withAsterisk
+            key={form.key("name")}
+            {...form.getInputProps("name")}
+          />
+          <TextInput
+            label="Email"
+            placeholder="Enter priest email"
+            withAsterisk
+            key={form.key("email")}
+            {...form.getInputProps("email")}
+          />
+          {!selectedPriest && (
+            <TextInput
+              label="Password"
+              placeholder="Enter password"
+              withAsterisk
+              type="password"
+              key={form.key("password")}
+              {...form.getInputProps("password")}
+            />
           )}
+          <Button type="submit" loading={isLoading}>
+            {getSubmitLabel()}
+          </Button>
         </Stack>
       </form>
     </Drawer>
@@ -293,7 +228,7 @@ const PriestPage = () => {
         fetching={isLoading}
         columns={[
           { accessor: "name" },
-          { accessor: "phoneNumber" },
+          { accessor: "email" },
           {
             accessor: "created",
             width: 300,

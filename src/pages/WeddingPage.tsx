@@ -18,7 +18,11 @@ import {
 } from "../hooks/useFirebaseFetcher";
 import { DatePickerInput } from "@mantine/dates";
 import CustomDatatable from "../components/CustomDatable";
-import { IWeddingAnnouncement } from "../database";
+import {
+  IWeddingAnnouncement,
+  IWeddingAppointment,
+  IWeddingRequestForm,
+} from "../database";
 import PageContent from "../components/PageContent";
 import TextEditor from "../components/TextEditor";
 import { notifications } from "@mantine/notifications";
@@ -26,6 +30,12 @@ import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { toStandardDateFormat } from "../utils";
 import dayjs from "dayjs";
+import StatusBadge from "../components/StatusBadge";
+import { RequestFormStatusEnum, StatusEnum } from "../enums";
+import {
+  TableApproveRejectButtons,
+  TableReadyButton,
+} from "../components/TableActions";
 
 interface IWeddingAnnouncementDrawer {
   opened: boolean;
@@ -35,6 +45,68 @@ interface IWeddingAnnouncementDrawer {
 
 export const isNotExpired = (expirationDate: string | Date) =>
   expirationDate > new Date().toISOString();
+
+const ApproveRejectButtons = ({
+  wedding,
+}: {
+  wedding: IWeddingAppointment;
+}) => {
+  const { mutate: updateWedding, isPending: isUpdating } =
+    useUpdate("weddingAppointment");
+
+  const handleApprove = async () => {
+    try {
+      if (!wedding.id) return;
+      await updateWedding({
+        id: wedding.id,
+        data: { status: StatusEnum.APPROVED },
+      });
+      notifications.show({
+        title: "Success",
+        message: "Wedding appointment has been approved",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Failed to update",
+        message: String(e),
+        color: "red",
+      });
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      if (!wedding.id) return;
+      await updateWedding({
+        id: wedding.id,
+        data: { status: StatusEnum.REJECTED },
+      });
+      notifications.show({
+        title: "Success",
+        message: "Wedding appointment has been rejected",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Failed to update",
+        message: String(e),
+        color: "red",
+      });
+    }
+  };
+
+  return (
+    <TableApproveRejectButtons
+      type="WeddingAppointment"
+      userId={wedding.userId}
+      status={wedding.status}
+      loading={isUpdating}
+      onApprove={handleApprove}
+      onReject={handleReject}
+    />
+  );
+};
 
 const WeddingAnnouncementDrawer = ({
   onClose,
@@ -160,6 +232,39 @@ const WeddingPage = () => {
   );
   const { mutate: deleteMutation } = useDelete("weddingAnnouncements");
 
+  const { data: weddingAppointments = [], isLoading: isLoadingAppointments } =
+    useFetchAll("weddingAppointment");
+
+  const { data: weddingRequestForms = [], isLoading: isLoadingRequestForm } =
+    useFetchAll("weddingRequestForm");
+
+  const { mutate: updateWeddingRequstForm, isPending: isUpdatingRequestForm } =
+    useUpdate("weddingRequestForm");
+
+  const updateRequestFormStatus = async (
+    id: string,
+    status: RequestFormStatusEnum
+  ) => {
+    try {
+      if (!id) return;
+      await updateWeddingRequstForm({
+        id,
+        data: { status },
+      });
+      notifications.show({
+        title: "Success",
+        message: "Request form updated",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Failed to update",
+        message: String(e),
+        color: "red",
+      });
+    }
+  };
+
   const editWeddingAnnouncement = (announcement: IWeddingAnnouncement) => {
     setSelectedWeddingAnnouncement(announcement);
     openDrawer();
@@ -183,8 +288,9 @@ const WeddingPage = () => {
   };
 
   return (
-    <PageContent title="Wedding">
+    <PageContent>
       <CustomDatatable
+        title="Wedding Announcements"
         fetching={isLoading}
         columns={[
           {
@@ -265,6 +371,140 @@ const WeddingPage = () => {
             </Button>
           </Group>
         }
+      />
+
+      <CustomDatatable
+        title="Wedding Appointments"
+        fetching={isLoadingAppointments}
+        records={weddingAppointments}
+        columns={[
+          { accessor: "bride" },
+          { accessor: "brideAge", title: "Bride Age" },
+          { accessor: "groom" },
+          { accessor: "groomAge", title: "Groom Age" },
+          { accessor: "contactNumber", title: "Contact Number" },
+
+          { accessor: "confirmedBy", title: "Confirmed By" },
+
+          {
+            accessor: "dateWedding",
+            title: "Date of Wedding",
+            render: (wedding) => {
+              const { dateWedding, timeWedding } =
+                wedding as IWeddingAppointment;
+              return (
+                <Text>{`${toStandardDateFormat(dateWedding, true)} ${timeWedding}`}</Text>
+              );
+            },
+          },
+          {
+            accessor: "dateConfirmation",
+            title: "Confirmation Date",
+            render: (wedding) => {
+              const { dateConfirmation, timeConfirmation } =
+                wedding as IWeddingAppointment;
+              return (
+                <Text>{`${toStandardDateFormat(dateConfirmation, true)} ${timeConfirmation}`}</Text>
+              );
+            },
+          },
+
+          {
+            accessor: "dateInterview",
+            title: "Interview Date",
+            render: (wedding) => {
+              const { dateInterview, timeInterview } =
+                wedding as IWeddingAppointment;
+              return (
+                <Text>{`${toStandardDateFormat(dateInterview, true)} ${timeInterview}`}</Text>
+              );
+            },
+          },
+          {
+            accessor: "dateCounseling",
+            title: "Counseling Date",
+            render: (wedding) => {
+              const { dateCounseling } = wedding as IWeddingAppointment;
+              return <Text>{toStandardDateFormat(dateCounseling, true)}</Text>;
+            },
+          },
+
+          { accessor: "venue" },
+
+          {
+            accessor: "status",
+            width: 120,
+            render: (wedding) => {
+              const { status } = wedding as IWeddingAppointment;
+              return <StatusBadge status={status} />;
+            },
+          },
+          {
+            accessor: "",
+            title: "Actions",
+            width: 150,
+            textAlign: "center",
+
+            render: (wedding) => (
+              <ApproveRejectButtons
+                wedding={wedding as unknown as IWeddingAppointment}
+              />
+            ),
+          },
+        ]}
+      />
+
+      <CustomDatatable
+        title="Wedding Request Forms"
+        fetching={isLoadingRequestForm}
+        records={weddingRequestForms}
+        columns={[
+          { accessor: "bridesName", title: "Bride's Name" },
+          { accessor: "groomsName", title: "Groom's Name" },
+          {
+            accessor: "contactNumber",
+            title: "Contact Number",
+          },
+          {
+            accessor: "dateofWedding",
+            title: "Date of Wedding",
+            render: (wedding) => {
+              const { dateOfWedding } = wedding as IWeddingRequestForm;
+              return <Text>{dayjs(dateOfWedding).format("dddd")}</Text>;
+            },
+          },
+          { accessor: "purpose", title: "Purpose" },
+          {
+            accessor: "",
+            title: "Actions",
+
+            textAlign: "center",
+
+            render: (data) => {
+              const wedding = data as IWeddingRequestForm;
+              return (
+                <TableReadyButton
+                  type="WeddingRequestForm"
+                  userId={wedding.userId}
+                  loading={isUpdatingRequestForm}
+                  status={wedding.status}
+                  onSetAsCollected={() =>
+                    updateRequestFormStatus(
+                      String(wedding.id),
+                      RequestFormStatusEnum.COLLECTED
+                    )
+                  }
+                  onSetAsReady={() =>
+                    updateRequestFormStatus(
+                      String(wedding.id),
+                      RequestFormStatusEnum.READY
+                    )
+                  }
+                />
+              );
+            },
+          },
+        ]}
       />
       <WeddingAnnouncementDrawer
         onClose={() => {

@@ -9,7 +9,7 @@ import {
 
 import classes from "../styles/PageNotFound.module.css";
 import image from "../assets/404.svg";
-import { routes } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
 import { useNavigate } from "react-router-dom";
 
 export default function PageNotFound() {
@@ -30,7 +30,7 @@ export default function PageNotFound() {
             size="md"
             mt="xl"
             className={classes.control}
-            onClick={() => navigate(routes.dashboard)}
+            onClick={() => navigate(ROUTES.dashboard)}
           >
             Get back to dashboard
           </Button>

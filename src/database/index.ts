@@ -9,23 +9,14 @@ import {
   update,
 } from "firebase/database";
 
-import { AppointmentStatusEnum } from "../enums";
+import { RequestFormStatusEnum, StatusEnum } from "../enums";
 import app from "./config";
 
 const database = getDatabase(app);
 
-export type TDBPaths =
-  | "priests"
-  | "massAppointments"
-  | "baptismAppointment"
-  | "confirmationAppointment"
-  | "weddingAnnouncements"
-  | "masses"
-  | "schedules"
-  | "announcements";
-
 export interface IBaseEntity {
   id?: string;
+  userId?: string;
   created?: string;
   updated?: string;
 }
@@ -33,16 +24,34 @@ export interface IBaseEntity {
 export interface IPriest extends IBaseEntity {
   authId: string | null;
   name: string;
-  phoneNumber: string;
+  email: string;
 }
 
 export interface IMass extends IBaseEntity {
   date: string;
-  description: string;
-  name: string;
+  massIntentions: string;
+  time: string;
+  status: StatusEnum;
+  priestId: string;
+}
+
+export interface IChurchLiturgy extends IBaseEntity {
+  appointment: string;
+  date: string;
+  fullName: string;
   place: string;
   time: string;
-  status: AppointmentStatusEnum;
+  status: StatusEnum;
+  priestId: string;
+}
+
+export interface IHouseLiturgy extends IBaseEntity {
+  appointment: string;
+  date: string;
+  fullName: string;
+  place: string;
+  time: string;
+  status: StatusEnum;
   priestId: string;
 }
 
@@ -56,10 +65,22 @@ export interface IBaptism extends IBaseEntity {
   child_sName: string;
   father_sName: string;
   parentsContactNumber: string;
-  status: AppointmentStatusEnum;
+  status?: StatusEnum;
 }
 
-export interface IConfirmations extends IBaseEntity {
+export interface IBaptismRequestForm extends IBaseEntity {
+  contactNumber: string;
+  dateOfBaptism: string;
+  dateOfBirth: string;
+  father: string;
+  mother: string;
+  name: string;
+  placeOfBaptism: string;
+  purpose: string;
+  status?: RequestFormStatusEnum;
+}
+
+export interface IConfirmationAppointments extends IBaseEntity {
   baptismDate: string;
   birthPlace: string;
   birthdate: string;
@@ -73,15 +94,27 @@ export interface IConfirmations extends IBaseEntity {
   sponsorName: string;
   sponsorRelation: string;
   purpose: string;
-  status: AppointmentStatusEnum;
+  status?: StatusEnum;
 }
 
-export interface IParish extends IBaseEntity {
+export interface IConfirmationRequestForm extends IBaseEntity {
+  contactNumber: string;
+  dateOfConfirmation: string;
+  father: string;
+  mother: string;
   name: string;
+  purpose: string;
+  status?: RequestFormStatusEnum;
 }
 
-export interface ISchedule extends IBaseEntity {
-  date: string;
+export interface IConfirmationRequestForm extends IBaseEntity {
+  contactNumber: string;
+  dateOfConfirmation: string;
+  father: string;
+  mother: string;
+  name: string;
+  purpose: string;
+  status?: RequestFormStatusEnum;
 }
 
 export interface IAnnouncement extends IBaseEntity {
@@ -93,16 +126,107 @@ export interface IWeddingAnnouncement extends IBaseEntity {
   expiration: string | Date;
 }
 
+export interface IWeddingAppointment extends IBaseEntity {
+  bride: string;
+  brideAge: string;
+  confirmedBy: string;
+  contactNumber: string;
+  date: string;
+  dateConfirmation: string;
+  dateCounseling: string;
+  dateInterview: string;
+  dateWedding: string;
+  groom: string;
+  groomAge: string;
+  timeConfirmation: string;
+  timeInterview: string;
+  timeWedding: string;
+  venue: string;
+  status?: StatusEnum;
+}
+
+export interface IWeddingRequestForm extends IBaseEntity {
+  address: string;
+  bridesName: string;
+  contactNumber: string;
+  dateOfWedding: string;
+  groomsName: string;
+  status?: RequestFormStatusEnum;
+}
+
+export interface IFuneralRequestForm extends IBaseEntity {
+  address: string;
+  causeOfDeath: string;
+  dateOfBirth: string;
+  dateOfBurial: string;
+  dateOfDeath: string;
+  funeralStatus: string;
+  nameOfInformant: string;
+  nameOfTheDeceased: string;
+  nearestKin: string;
+  phoneNumberOfInformant: string;
+  relationToTheDeceased: string;
+  religion: string;
+  status?: RequestFormStatusEnum;
+}
+
+export interface INotification {
+  id?: string;
+  message: string;
+  timestamp: string;
+  title: string;
+  type:
+    | "MassAppointment"
+    | "HouseLiturgyAppointment"
+    | "ChurchLiturgyAppointment"
+    | "BaptismAppointment"
+    | "BaptismRequestForm"
+    | "ConfirmationAppointment"
+    | "ConfirmationRequestForm"
+    | "WeddingAnnouncement"
+    | "WeddingAppointment"
+    | "WeddingRequestForm"
+    | "FuneralRequestForm"
+    | "FuneralAppointment";
+  read?: boolean;
+  userId: string | null;
+  fromAdmin?: boolean;
+}
+
 export type TDBEntities = {
   priests: IPriest;
-  massAppointments: IMass;
-  baptismAppointment: IBaptism;
-  confirmationAppointment: IConfirmations;
-  masses: IMass;
-  schedules: ISchedule;
   announcements: IAnnouncement;
+  massAppointments: IMass;
+  houseLiturgyAppointment: IHouseLiturgy;
+  churchLiturgyAppointment: IChurchLiturgy;
+  baptismAppointment: IBaptism;
+  baptismRequestForm: IBaptismRequestForm;
+  confirmationAppointment: IConfirmationAppointments;
+  confirmationRequestForm: IConfirmationRequestForm;
   weddingAnnouncements: IWeddingAnnouncement;
+  weddingAppointment: IWeddingAppointment;
+  weddingRequestForm: IWeddingRequestForm;
+  funeralAppointment: IFuneralRequestForm;
+  funeralRequestForm: IFuneralRequestForm;
+  notification: INotification;
 };
+
+export type TDBPaths =
+  | "announcements"
+  | "priests"
+  | "massAppointments"
+  | "houseLiturgyAppointment"
+  | "churchLiturgyAppointment"
+  | "baptismAppointment"
+  | "baptismRequestForm"
+  | "confirmationAppointment"
+  | "confirmationRequestForm"
+  | "weddingAnnouncements"
+  | "weddingAppointment"
+  | "weddingRequestForm"
+  | "funeralAppointment"
+  | "funeralRequestForm"
+  | "notification";
 
 export type FirebaseDatabaseReturn<T extends TDBPaths> = {
   create: (data: TDBEntities[T]) => Promise<string>; // Assuming create returns the generated key
