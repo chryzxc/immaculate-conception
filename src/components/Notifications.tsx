@@ -10,12 +10,12 @@ import {
   Text,
 } from "@mantine/core";
 
-import { toStandardDateFormat } from "../utils";
 import { IconBell } from "@tabler/icons-react";
-import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
-import { INotification } from "../database";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
+import { INotification } from "../database";
+import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
+import { toStandardDateFormat } from "../utils";
 
 const Notification = ({ data }: { data: INotification }) => {
   const { read, message, timestamp, type } = data;
@@ -27,9 +27,28 @@ const Notification = ({ data }: { data: INotification }) => {
       updateNotification({ id: String(data.id), data: { read: true } });
     }
 
-    if (type === "MassAppointment") {
-      navigate(ROUTES.mass);
+    const notificationRouteMapper: Record<INotification["type"], string> = {
+      BaptismAppointment: ROUTES.baptism,
+      ConfirmationAppointment: ROUTES.confirmation,
+      ConfirmationRequestForm: ROUTES.confirmation,
+      BaptismRequestForm: ROUTES.baptism,
+      MassAppointment: ROUTES.mass,
+      ChurchLiturgyAppointment: ROUTES.funeral,
+      FuneralAppointment: ROUTES.funeral,
+      FuneralRequestForm: ROUTES.funeral,
+      HouseLiturgyAppointment: ROUTES.funeral,
+      WeddingAnnouncement: ROUTES.wedding,
+      WeddingAppointment: ROUTES.wedding,
+      WeddingRequestForm: ROUTES.wedding,
+    };
+
+    const route = notificationRouteMapper[type];
+
+    if (route) {
+      navigate(route);
     }
+
+    return;
   };
 
   return (
