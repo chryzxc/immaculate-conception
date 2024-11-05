@@ -23,12 +23,14 @@ export default function CustomDatatable({
   const [selectedRecords, setSelectedRecords] = useState<unknown[]>([]);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [page, setPage] = useState(1);
-  const [tableRecords, setTableRecords] = useState(records.slice(0, pageSize));
+  const [tableRecords, setTableRecords] = useState(
+    [...records].reverse().slice(0, pageSize)
+  );
 
   useEffect(() => {
     const from = (page - 1) * pageSize;
     const to = from + pageSize;
-    setTableRecords(records.slice(from, to));
+    setTableRecords([...records].reverse().slice(from, to));
   }, [records, page, pageSize]);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function CustomDatatable({
         )}
         <DataTable
           {...otherProps}
-          records={[...tableRecords].reverse()}
+          records={tableRecords}
           highlightOnHover
           totalRecords={records.length}
           recordsPerPage={pageSize}

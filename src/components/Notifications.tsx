@@ -110,7 +110,7 @@ const Notifications = () => {
           <Text fw={700}>Notifications</Text>
           <ScrollArea.Autosize mah={500} mt="md">
             <Stack>
-              {filteredNotifications.map((notification, idx) => (
+              {[...filteredNotifications].reverse().map((notification, idx) => (
                 <Notification data={notification} key={idx} />
               ))}
             </Stack>
