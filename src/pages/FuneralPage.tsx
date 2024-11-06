@@ -226,7 +226,7 @@ const HouseLiturgySection = () => {
 
   return (
     <CustomDatatable
-      title="Church Liturgy Appointments"
+      title="House Liturgy Appointments"
       fetching={isLoading}
       records={masses}
       columns={[
