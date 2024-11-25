@@ -1,9 +1,10 @@
 import { Button, Card, Group, Stack, Text, TextInput } from "@mantine/core";
 import { ComponentProps, useEffect, useState } from "react";
-
 import { DataTable } from "mantine-datatable";
 import { IconSearch, IconTrash } from "@tabler/icons-react";
 import { useDebouncedValue } from "@mantine/hooks";
+import { saveAs } from "file-saver";
+import Papa from "papaparse";
 
 const PAGE_SIZES = [10, 15, 20];
 
@@ -50,6 +51,29 @@ export default function CustomDatatable({
     setPage(1);
   }, [pageSize]);
 
+  // Export to CSV Functionality
+  const exportToCSV = () => {
+    // Map records to a flat structure for CSV
+    const formattedData = records.map((record: unknown) => ({
+      Name: record.name,
+      "Mother's Name": record.motherName,
+      "Father's Name": record.fatherName,
+      Church: record.church,
+      "Birth Place": record.birthPlace,
+      "Contact Number": record.guardianNumber,
+      "Date of Baptism": record.baptismDate,
+      Sponsor: record.sponsorName,
+      Status: record.status,
+    }));
+
+    // Convert to CSV
+    const csv = Papa.unparse(formattedData);
+
+    // Create a Blob and trigger download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `${title || "data"}.csv`);
+  };
+
   return (
     <Card shadow="lg" withBorder radius="md">
       <Stack>
@@ -65,22 +89,25 @@ export default function CustomDatatable({
             onChange={(event) => setQuery(event.currentTarget.value)}
           />
         </Group>
-        {(!!onDeleteRecords || !!actionComponent) && (
-          <Group justify="space-between">
-            {onDeleteRecords && (
-              <Button
-                disabled={!selectedRecords.length}
-                color="red"
-                leftSection={<IconTrash />}
-              >
-                {!selectedRecords.length
-                  ? "Select records to delete"
-                  : `Delete ${selectedRecords.length} ${selectedRecords.length > 1 ? "records" : "record"} `}
-              </Button>
-            )}
-            {actionComponent}
-          </Group>
-        )}
+        <Group justify="space-between">
+          <Button onClick={exportToCSV} color="blue">
+            Export as CSV
+          </Button>
+          {onDeleteRecords && (
+            <Button
+              disabled={!selectedRecords.length}
+              color="red"
+              leftSection={<IconTrash />}
+            >
+              {!selectedRecords.length
+                ? "Select records to delete"
+                : `Delete ${selectedRecords.length} ${
+                    selectedRecords.length > 1 ? "records" : "record"
+                  }`}
+            </Button>
+          )}
+          {actionComponent}
+        </Group>
         <DataTable
           {...otherProps}
           records={tableRecords}
