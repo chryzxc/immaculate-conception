@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import { Tabs, Text } from "@mantine/core";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
@@ -16,6 +16,11 @@ import {
   IRequestFormRelease,
 } from "../database";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
+
+enum TabEnum {
+  Appointment = "appointment",
+  RequestForm = "request-form",
+}
 
 const ApproveRejectButtons = ({
   confirmation,
@@ -123,124 +128,138 @@ const ConfirmationPage = () => {
 
   return (
     <PageContent>
-      <CustomDatatable
-        title="Confirmation Appointments"
-        fetching={isLoadingAppointments}
-        records={confirmationAppointments}
-        columns={[
-          { accessor: "name", title: "Name" },
-          { accessor: "motherName", title: "Mother's Name" },
-          { accessor: "fatherName", title: "Father's Name" },
-          { accessor: "church", title: "Church" },
-          { accessor: "birthPlace", title: "Birth place" },
-          {
-            accessor: "guardianNumber",
-            title: "Contact Number",
-          },
-          {
-            accessor: "baptismDate",
-            title: "Date of Baptism",
-            render: (confirmation) => {
-              const { baptismDate } = confirmation as IConfirmationAppointments;
-              return <Text>{dayjs(baptismDate).format("dddd")}</Text>;
-            },
-          },
-          { accessor: "sponsorName", title: "Sponsor" },
+      <Tabs defaultValue={TabEnum.Appointment}>
+        <Tabs.List>
+          <Tabs.Tab value={TabEnum.Appointment}>Appointment</Tabs.Tab>
+          <Tabs.Tab value={TabEnum.RequestForm}>Request Form</Tabs.Tab>
+        </Tabs.List>
 
-          {
-            accessor: "status",
-            width: 120,
-            render: (confirmation) => {
-              const { status } = confirmation as IConfirmationAppointments;
-              return <StatusBadge status={status} />;
-            },
-          },
-          {
-            accessor: "",
-            title: "Actions",
-            width: 120,
-            textAlign: "center",
+        <Tabs.Panel value={TabEnum.Appointment}>
+          <CustomDatatable
+            title="Confirmation Appointments"
+            fetching={isLoadingAppointments}
+            records={confirmationAppointments}
+            columns={[
+              { accessor: "name", title: "Name" },
+              { accessor: "motherName", title: "Mother's Name" },
+              { accessor: "fatherName", title: "Father's Name" },
+              { accessor: "church", title: "Church" },
+              { accessor: "birthPlace", title: "Birth place" },
+              {
+                accessor: "guardianNumber",
+                title: "Contact Number",
+              },
+              {
+                accessor: "baptismDate",
+                title: "Date of Baptism",
+                render: (confirmation) => {
+                  const { baptismDate } =
+                    confirmation as IConfirmationAppointments;
+                  return <Text>{dayjs(baptismDate).format("dddd")}</Text>;
+                },
+              },
+              { accessor: "sponsorName", title: "Sponsor" },
 
-            render: (confirmation) => (
-              <ApproveRejectButtons
-                confirmation={
-                  confirmation as unknown as IConfirmationAppointments
-                }
-              />
-            ),
-          },
-        ]}
-      />
+              {
+                accessor: "status",
+                width: 120,
+                render: (confirmation) => {
+                  const { status } = confirmation as IConfirmationAppointments;
+                  return <StatusBadge status={status} />;
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
+                width: 120,
+                textAlign: "center",
 
-      <CustomDatatable
-        title="Confirmation Request Forms"
-        fetching={isLoadingRequestForm}
-        records={confirmationRequestForms}
-        columns={[
-          { accessor: "name", title: "Name" },
-          { accessor: "mother", title: "Mother's Name" },
-          { accessor: "father", title: "Father's Name" },
+                render: (confirmation) => (
+                  <ApproveRejectButtons
+                    confirmation={
+                      confirmation as unknown as IConfirmationAppointments
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
+        </Tabs.Panel>
 
-          {
-            accessor: "contactNumber",
-            title: "Contact Number",
-          },
-          {
-            accessor: "dateofConfirmation",
-            title: "Date of Confirmation",
-            render: (confirmation) => {
-              const { dateOfConfirmation } =
-                confirmation as IConfirmationRequestForm;
-              return <Text>{dayjs(dateOfConfirmation).format("dddd")}</Text>;
-            },
-          },
-          { accessor: "purpose", title: "Purpose" },
-          {
-            accessor: "releasedTo",
-            title: "Released To",
-            render: (baptism) => {
-              const { releasedDate, releasedTo } =
-                baptism as IConfirmationRequestForm;
-              if (!releasedDate || !releasedTo) return null;
+        <Tabs.Panel value={TabEnum.RequestForm}>
+          <CustomDatatable
+            title="Confirmation Request Forms"
+            fetching={isLoadingRequestForm}
+            records={confirmationRequestForms}
+            columns={[
+              { accessor: "name", title: "Name" },
+              { accessor: "mother", title: "Mother's Name" },
+              { accessor: "father", title: "Father's Name" },
 
-              return (
-                <Text>{`${releasedTo} (${dayjs(releasedDate).format("dddd")})`}</Text>
-              );
-            },
-          },
-          {
-            accessor: "",
-            title: "Actions",
+              {
+                accessor: "contactNumber",
+                title: "Contact Number",
+              },
+              {
+                accessor: "dateofConfirmation",
+                title: "Date of Confirmation",
+                render: (confirmation) => {
+                  const { dateOfConfirmation } =
+                    confirmation as IConfirmationRequestForm;
+                  return (
+                    <Text>{dayjs(dateOfConfirmation).format("dddd")}</Text>
+                  );
+                },
+              },
+              { accessor: "purpose", title: "Purpose" },
+              {
+                accessor: "releasedTo",
+                title: "Released To",
+                render: (baptism) => {
+                  const { releasedDate, releasedTo } =
+                    baptism as IConfirmationRequestForm;
+                  if (!releasedDate || !releasedTo) return null;
 
-            textAlign: "center",
+                  return (
+                    <Text>{`${releasedTo} (${dayjs(releasedDate).format("dddd")})`}</Text>
+                  );
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
 
-            render: (data) => {
-              const confirmation = data as IConfirmationRequestForm;
-              return (
-                <TableReadyButton
-                  type="ConfirmationRequestForm"
-                  loading={isUpdatingRequestForm}
-                  status={confirmation.status}
-                  userId={confirmation.userId}
-                  onSetAsCollected={(data) =>
-                    updateRequestFormStatus(
-                      String(confirmation.id),
-                      RequestFormStatusEnum.RELEASED,
-                      data
-                    )
-                  }
-                  onSetAsReady={() =>
-                    updateRequestFormStatus(
-                      String(confirmation.id),
-                      RequestFormStatusEnum.READY
-                    )
-                  }
-                />
-              );
-            },
-          },
-        ]}
-      />
+                textAlign: "center",
+
+                render: (data) => {
+                  const confirmation = data as IConfirmationRequestForm;
+                  return (
+                    <TableReadyButton
+                      type="ConfirmationRequestForm"
+                      loading={isUpdatingRequestForm}
+                      status={confirmation.status}
+                      userId={confirmation.userId}
+                      onSetAsCollected={(data) =>
+                        updateRequestFormStatus(
+                          String(confirmation.id),
+                          RequestFormStatusEnum.RELEASED,
+                          data
+                        )
+                      }
+                      onSetAsReady={() =>
+                        updateRequestFormStatus(
+                          String(confirmation.id),
+                          RequestFormStatusEnum.READY
+                        )
+                      }
+                    />
+                  );
+                },
+              },
+            ]}
+          />
+        </Tabs.Panel>
+      </Tabs>
     </PageContent>
   );
 };
