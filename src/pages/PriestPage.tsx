@@ -26,6 +26,8 @@ import {
   useUpdate,
 } from "../hooks/useFirebaseFetcher";
 import { toStandardDateFormat } from "../utils";
+import { modals } from "@mantine/modals";
+import { CONFIRMATION_MESSAGE } from "../constants/string";
 
 interface IPriestDrawer {
   opened: boolean;
@@ -207,11 +209,18 @@ const PriestPage = () => {
 
   const deletePriest = async (id: string) => {
     try {
-      await deleteMutation(id);
-      notifications.show({
-        title: "Success",
-        message: "Priest deleted",
-        color: "green",
+      modals.openConfirmModal({
+        title: "Are you sure you want to delete this?",
+        children: <Text size="sm">{CONFIRMATION_MESSAGE}</Text>,
+        labels: { confirm: "Confirm", cancel: "Cancel" },
+        onConfirm: async () => {
+          await deleteMutation(id);
+          notifications.show({
+            title: "Success",
+            message: "Priest deleted",
+            color: "green",
+          });
+        },
       });
     } catch (e) {
       notifications.show({

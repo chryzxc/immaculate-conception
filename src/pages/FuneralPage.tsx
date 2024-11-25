@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import { Tabs, Text } from "@mantine/core";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
@@ -8,14 +8,34 @@ import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
 import {
   TableApproveRejectButtons,
+  TableConfirmRejectRequestButtons,
   TableReadyButton,
 } from "../components/TableActions";
-import { IChurchLiturgy, IFuneralRequestForm, IMass } from "../database";
-import { RequestFormStatusEnum, StatusEnum } from "../enums";
+import {
+  IChurchLiturgy,
+  IFuneralRequestForm,
+  IMass,
+  IRequestFormRelease,
+} from "../database";
+import {
+  PriestConfirmationStatusEnum,
+  RequestFormStatusEnum,
+  StatusEnum,
+} from "../enums";
 import { toStandardDateFormat } from "../utils";
 import { Priest } from "./MassPage";
+import useUserStore from "../store/user";
+import useFilterList from "../hooks/useUserFilterList";
+import { DataTableColumn } from "mantine-datatable";
+
+enum TabEnum {
+  ChurchLiturgy = "church-liturgy-appointment",
+  HouseLiturgy = " house-liturgy-appointment",
+  FuneralRequestForm = "funeral-request-form",
+}
 
 const ChurchLiturgySection = () => {
+  const { user } = useUserStore();
   const { data: masses = [], isLoading } = useFetchAll(
     "churchLiturgyAppointment"
   );
@@ -24,12 +44,16 @@ const ChurchLiturgySection = () => {
     "churchLiturgyAppointment"
   );
 
-  const handleApprove = async (massId: string) => {
+  const filteredMasses = useFilterList(masses);
+
+  const handleApprove = async (massId: string, isConfirmation?: boolean) => {
     try {
       if (!massId) return;
       await updateMass({
         id: massId,
-        data: { status: StatusEnum.APPROVED },
+        data: isConfirmation
+          ? { priestConfirmationStatus: PriestConfirmationStatusEnum.APPROVED }
+          : { status: StatusEnum.APPROVED },
       });
       notifications.show({
         title: "Success",
@@ -45,12 +69,14 @@ const ChurchLiturgySection = () => {
     }
   };
 
-  const handleReject = async (massId: string) => {
+  const handleReject = async (massId: string, isConfirmation?: boolean) => {
     try {
       if (!massId) return;
       await updateMass({
         id: massId,
-        data: { status: StatusEnum.REJECTED },
+        data: isConfirmation
+          ? { priestConfirmationStatus: PriestConfirmationStatusEnum.REJECTED }
+          : { status: StatusEnum.REJECTED },
       });
       notifications.show({
         title: "Success",
@@ -66,11 +92,20 @@ const ChurchLiturgySection = () => {
     }
   };
 
-  const assignPriest = async (massId: string, priestId: string) => {
+  const assignPriest = async (
+    massId: string,
+    priestId: string,
+    sendRequest: boolean
+  ) => {
     try {
       await updateMass({
         id: massId,
-        data: { priestId },
+        data: {
+          priestId,
+          priestConfirmationStatus: sendRequest
+            ? PriestConfirmationStatusEnum.PENDING
+            : PriestConfirmationStatusEnum.APPROVED,
+        },
       });
       notifications.show({
         title: "Success",
@@ -90,7 +125,7 @@ const ChurchLiturgySection = () => {
     <CustomDatatable
       title="Church Liturgy Appointments"
       fetching={isLoading}
-      records={masses}
+      records={filteredMasses}
       columns={[
         { accessor: "appointment" },
         { accessor: "fullName" },
@@ -104,56 +139,82 @@ const ChurchLiturgySection = () => {
             return <Text>{dayjs(date).format("dddd")}</Text>;
           },
         },
-        {
-          accessor: "priestId",
-          title: "Priest",
-          textAlign: "center",
-          render: (mass) => {
-            const { priestId, id } = mass as IChurchLiturgy;
-            return (
-              <Priest
-                priestId={priestId}
-                onAssignPriest={(priestId) =>
-                  assignPriest(String(id), priestId)
-                }
-              />
-            );
-          },
-        },
-        {
-          accessor: "status",
-          textAlign: "center",
-          render: (mass) => {
-            const { status } = mass as IChurchLiturgy;
-            return <StatusBadge status={status} />;
-          },
-        },
-        {
-          accessor: "",
-          title: "Actions",
+        ...(user?.isSuperAdmin
+          ? ([
+              {
+                accessor: "priestId",
+                title: "Priest",
+                textAlign: "center",
+                render: (mass) => {
+                  const { priestId, id } = mass as IChurchLiturgy;
+                  return (
+                    <Priest
+                      priestId={priestId}
+                      onAssignPriest={({ priestId, sendConfirmationRequest }) =>
+                        assignPriest(
+                          String(id),
+                          priestId,
+                          sendConfirmationRequest
+                        )
+                      }
+                    />
+                  );
+                },
+              },
+              {
+                accessor: "status",
+                textAlign: "center",
+                render: (mass) => {
+                  const { status } = mass as IChurchLiturgy;
+                  return <StatusBadge status={status} />;
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
 
-          textAlign: "center",
+                textAlign: "center",
 
-          render: (data) => {
-            const mass = data as IChurchLiturgy;
-            return (
-              <TableApproveRejectButtons
-                type="ChurchLiturgyAppointment"
-                userId={mass.userId}
-                loading={isUpdating}
-                status={mass.status}
-                onApprove={() => handleApprove(String(mass.id))}
-                onReject={() => handleReject(String(mass.id))}
-              />
-            );
-          },
-        },
+                render: (data) => {
+                  const mass = data as IChurchLiturgy;
+                  return (
+                    <TableApproveRejectButtons
+                      type="ChurchLiturgyAppointment"
+                      userId={mass.userId}
+                      loading={isUpdating}
+                      status={mass.status}
+                      onApprove={() => handleApprove(String(mass.id))}
+                      onReject={() => handleReject(String(mass.id))}
+                    />
+                  );
+                },
+              },
+            ] as DataTableColumn<unknown>[])
+          : ([
+              {
+                accessor: "",
+                title: "Actions",
+                textAlign: "center",
+                render: (data) => {
+                  const mass = data as IMass;
+                  return (
+                    <TableConfirmRejectRequestButtons
+                      loading={isUpdating}
+                      status={mass.priestConfirmationStatus}
+                      onApprove={() => handleApprove(String(mass.id), true)}
+                      onReject={() => handleReject(String(mass.id), true)}
+                    />
+                  );
+                },
+              },
+            ] as DataTableColumn<unknown>[])),
       ]}
     />
   );
 };
 
 const HouseLiturgySection = () => {
+  const { user } = useUserStore();
   const { data: masses = [], isLoading } = useFetchAll(
     "houseLiturgyAppointment"
   );
@@ -162,12 +223,16 @@ const HouseLiturgySection = () => {
     "houseLiturgyAppointment"
   );
 
-  const handleApprove = async (massId: string) => {
+  const filteredMasses = useFilterList(masses);
+
+  const handleApprove = async (massId: string, isConfirmation?: boolean) => {
     try {
       if (!massId) return;
       await updateMass({
         id: massId,
-        data: { status: StatusEnum.APPROVED },
+        data: isConfirmation
+          ? { priestConfirmationStatus: PriestConfirmationStatusEnum.APPROVED }
+          : { status: StatusEnum.APPROVED },
       });
       notifications.show({
         title: "Success",
@@ -183,12 +248,14 @@ const HouseLiturgySection = () => {
     }
   };
 
-  const handleReject = async (massId: string) => {
+  const handleReject = async (massId: string, isConfirmation?: boolean) => {
     try {
       if (!massId) return;
       await updateMass({
         id: massId,
-        data: { status: StatusEnum.REJECTED },
+        data: isConfirmation
+          ? { priestConfirmationStatus: PriestConfirmationStatusEnum.REJECTED }
+          : { status: StatusEnum.REJECTED },
       });
       notifications.show({
         title: "Success",
@@ -204,11 +271,20 @@ const HouseLiturgySection = () => {
     }
   };
 
-  const assignPriest = async (massId: string, priestId: string) => {
+  const assignPriest = async (
+    massId: string,
+    priestId: string,
+    sendRequest: boolean
+  ) => {
     try {
       await updateMass({
         id: massId,
-        data: { priestId },
+        data: {
+          priestId,
+          priestConfirmationStatus: sendRequest
+            ? PriestConfirmationStatusEnum.PENDING
+            : PriestConfirmationStatusEnum.APPROVED,
+        },
       });
       notifications.show({
         title: "Success",
@@ -228,7 +304,7 @@ const HouseLiturgySection = () => {
     <CustomDatatable
       title="House Liturgy Appointments"
       fetching={isLoading}
-      records={masses}
+      records={filteredMasses}
       columns={[
         { accessor: "appointment" },
         { accessor: "fullName" },
@@ -242,50 +318,76 @@ const HouseLiturgySection = () => {
             return <Text>{dayjs(date).format("dddd")}</Text>;
           },
         },
-        {
-          accessor: "priestId",
-          title: "Priest",
-          textAlign: "center",
-          render: (mass) => {
-            const { priestId, id } = mass as IMass;
-            return (
-              <Priest
-                priestId={priestId}
-                onAssignPriest={(priestId) =>
-                  assignPriest(String(id), priestId)
-                }
-              />
-            );
-          },
-        },
-        {
-          accessor: "status",
-          textAlign: "center",
-          render: (mass) => {
-            const { status } = mass as IMass;
-            return <StatusBadge status={status} />;
-          },
-        },
-        {
-          accessor: "",
-          title: "Actions",
+        ...(user?.isSuperAdmin
+          ? ([
+              {
+                accessor: "priestId",
+                title: "Priest",
+                textAlign: "center",
+                render: (mass) => {
+                  const { priestId, id } = mass as IMass;
 
-          textAlign: "center",
+                  return (
+                    <Priest
+                      priestId={priestId}
+                      onAssignPriest={({ priestId, sendConfirmationRequest }) =>
+                        assignPriest(
+                          String(id),
+                          priestId,
+                          sendConfirmationRequest
+                        )
+                      }
+                    />
+                  );
+                },
+              },
+              {
+                accessor: "status",
+                textAlign: "center",
+                render: (mass) => {
+                  const { status } = mass as IMass;
+                  return <StatusBadge status={status} />;
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
 
-          render: (data) => {
-            const mass = data as IMass;
-            return (
-              <TableApproveRejectButtons
-                type="HouseLiturgyAppointment"
-                userId={mass.userId}
-                loading={isUpdating}
-                status={mass.status}
-                onApprove={() => handleApprove(String(mass.id))}
-                onReject={() => handleReject(String(mass.id))}
-              />
-            );
-          },
-        },
+                textAlign: "center",
+
+                render: (data) => {
+                  const mass = data as IMass;
+                  return (
+                    <TableApproveRejectButtons
+                      type="HouseLiturgyAppointment"
+                      userId={mass.userId}
+                      loading={isUpdating}
+                      status={mass.status}
+                      onApprove={() => handleApprove(String(mass.id))}
+                      onReject={() => handleReject(String(mass.id))}
+                    />
+                  );
+                },
+              },
+            ] as DataTableColumn<unknown>[])
+          : ([
+              {
+                accessor: "",
+                title: "Actions",
+                textAlign: "center",
+                render: (data) => {
+                  const mass = data as IMass;
+                  return (
+                    <TableConfirmRejectRequestButtons
+                      loading={isUpdating}
+                      status={mass.priestConfirmationStatus}
+                      onApprove={() => handleApprove(String(mass.id), true)}
+                      onReject={() => handleReject(String(mass.id), true)}
+                    />
+                  );
+                },
+              },
+            ] as DataTableColumn<unknown>[])),
       ]}
     />
   );
@@ -300,13 +402,14 @@ const FuneralRequestFormSection = () => {
 
   const updateRequestFormStatus = async (
     id: string,
-    status: RequestFormStatusEnum
+    status: RequestFormStatusEnum,
+    otherData?: IRequestFormRelease
   ) => {
     try {
       if (!id) return;
       await updateFuneralRequstForm({
         id,
-        data: { status },
+        data: { status, ...otherData },
       });
       notifications.show({
         title: "Success",
@@ -359,7 +462,18 @@ const FuneralRequestFormSection = () => {
             return <Text>{toStandardDateFormat(dateOfDeath, true)}</Text>;
           },
         },
+        {
+          accessor: "releasedTo",
+          title: "Released To",
+          render: (baptism) => {
+            const { releasedDate, releasedTo } = baptism as IFuneralRequestForm;
+            if (!releasedDate || !releasedTo) return null;
 
+            return (
+              <Text>{`${releasedTo} (${dayjs(releasedDate).format("dddd")})`}</Text>
+            );
+          },
+        },
         {
           accessor: "",
           title: "Actions",
@@ -374,10 +488,11 @@ const FuneralRequestFormSection = () => {
                 userId={funeral.userId}
                 loading={isUpdatingRequestForm}
                 status={funeral.status}
-                onSetAsCollected={() =>
+                onSetAsCollected={(data) =>
                   updateRequestFormStatus(
                     String(funeral.id),
-                    RequestFormStatusEnum.COLLECTED
+                    RequestFormStatusEnum.RELEASED,
+                    data
                   )
                 }
                 onSetAsReady={() =>
@@ -396,11 +511,35 @@ const FuneralRequestFormSection = () => {
 };
 
 const FuneralPage = () => {
+  const { user } = useUserStore();
+
   return (
     <PageContent>
-      <ChurchLiturgySection />
-      <HouseLiturgySection />
-      <FuneralRequestFormSection />
+      <Tabs defaultValue={TabEnum.ChurchLiturgy}>
+        <Tabs.List>
+          <Tabs.Tab value={TabEnum.ChurchLiturgy}>Church Liturgy</Tabs.Tab>
+          <Tabs.Tab value={TabEnum.HouseLiturgy}>House Liturgy</Tabs.Tab>
+          {user?.isSuperAdmin && (
+            <Tabs.Tab value={TabEnum.FuneralRequestForm}>
+              Funeral Request Forms
+            </Tabs.Tab>
+          )}
+        </Tabs.List>
+
+        <Tabs.Panel value={TabEnum.ChurchLiturgy}>
+          <ChurchLiturgySection />
+        </Tabs.Panel>
+
+        <Tabs.Panel value={TabEnum.HouseLiturgy}>
+          <HouseLiturgySection />
+        </Tabs.Panel>
+
+        {user?.isSuperAdmin && (
+          <Tabs.Panel value={TabEnum.FuneralRequestForm}>
+            <FuneralRequestFormSection />
+          </Tabs.Panel>
+        )}
+      </Tabs>
     </PageContent>
   );
 };

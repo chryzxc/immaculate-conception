@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, Group, Tabs, Text, Tooltip } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
@@ -7,10 +7,19 @@ import dayjs from "dayjs";
 import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
-import { IBaptism, IBaptismRequestForm } from "../database";
+import {
+  IBaptism,
+  IBaptismRequestForm,
+  IRequestFormRelease,
+} from "../database";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
 import { TableReadyButton } from "../components/TableActions";
 import { toStandardDateFormat } from "../utils";
+
+enum TabEnum {
+  Appointment = "appointment",
+  RequestForm = "request-form",
+}
 
 const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
   const { mutate: updateBaptism, isPending: isUpdating } =
@@ -99,13 +108,14 @@ const BaptismPage = () => {
 
   const updateRequestFormStatus = async (
     id: string,
-    status: RequestFormStatusEnum
+    status: RequestFormStatusEnum,
+    otherData?: IRequestFormRelease
   ) => {
     try {
       if (!id) return;
       await updateBaptismRequstForm({
         id,
-        data: { status },
+        data: { status, ...otherData },
       });
       notifications.show({
         title: "Success",
@@ -123,105 +133,142 @@ const BaptismPage = () => {
 
   return (
     <PageContent>
-      <CustomDatatable
-        title="Baptism Appointments"
-        fetching={isLoading}
-        records={baptismes}
-        columns={[
-          { accessor: "child_sName", title: "Child's Name" },
-          { accessor: "mother_sName", title: "Mother's Name" },
-          { accessor: "father_sName", title: "Father's Name" },
-          { accessor: "birthdate", title: "Date of birth" },
-          { accessor: "birthPlace", title: "Birth place" },
-          {
-            accessor: "parentsContactNumber",
-            title: "Contact Number",
-          },
-          {
-            accessor: "baptismDate",
-            title: "Date of baptism",
+      <Tabs defaultValue={TabEnum.Appointment}>
+        <Tabs.List>
+          <Tabs.Tab value={TabEnum.Appointment}>Appointment</Tabs.Tab>
+          <Tabs.Tab value={TabEnum.RequestForm}>Request Form</Tabs.Tab>
+        </Tabs.List>
 
-            render: (baptism) => {
-              const { baptismDate } = baptism as IBaptism;
-              return <Text>{toStandardDateFormat(baptismDate, true)}</Text>;
-            },
-          },
-          { accessor: "baptismSponsors", title: "Sponsors" },
+        <Tabs.Panel value={TabEnum.Appointment}>
+          <CustomDatatable
+            title="Baptism Appointments"
+            fetching={isLoading}
+            records={baptismes}
+            columns={[
+              { accessor: "child_sName", title: "Child's Name" },
+              { accessor: "mother_sName", title: "Mother's Name" },
+              { accessor: "father_sName", title: "Father's Name" },
 
-          {
-            accessor: "status",
-            width: 120,
-            render: (baptism) => {
-              const { status } = baptism as IBaptism;
-              return <StatusBadge status={status} />;
-            },
-          },
-          {
-            accessor: "",
-            title: "Actions",
-            width: 120,
-            textAlign: "center",
+              {
+                accessor: "birthdate",
+                title: "Date of birth",
 
-            render: (baptism) => (
-              <ApproveRejectButtons baptism={baptism as unknown as IBaptism} />
-            ),
-          },
-        ]}
-      />
-      <CustomDatatable
-        title="Baptism Request Forms"
-        fetching={isLoadingRequestForm}
-        records={baptismRequestForms}
-        columns={[
-          { accessor: "name", title: "Name" },
-          { accessor: "mother", title: "Mother's Name" },
-          { accessor: "father", title: "Father's Name" },
+                render: (baptism) => {
+                  const { birthdate } = baptism as IBaptism;
+                  return <Text>{toStandardDateFormat(birthdate, true)}</Text>;
+                },
+              },
+              { accessor: "birthPlace", title: "Birth place" },
+              {
+                accessor: "parentsContactNumber",
+                title: "Contact Number",
+              },
+              {
+                accessor: "baptismDate",
+                title: "Date of baptism",
 
-          {
-            accessor: "contactNumber",
-            title: "Contact Number",
-          },
-          {
-            accessor: "dateofBaptism",
-            title: "Date of Baptism",
-            render: (baptism) => {
-              const { dateOfBaptism } = baptism as IBaptismRequestForm;
-              return <Text>{dayjs(dateOfBaptism).format("dddd")}</Text>;
-            },
-          },
-          { accessor: "purpose", title: "Purpose" },
-          {
-            accessor: "",
-            title: "Actions",
+                render: (baptism) => {
+                  const { baptismDate } = baptism as IBaptism;
+                  return <Text>{toStandardDateFormat(baptismDate, true)}</Text>;
+                },
+              },
+              { accessor: "baptismSponsors", title: "Sponsors" },
 
-            textAlign: "center",
+              {
+                accessor: "status",
+                width: 120,
+                render: (baptism) => {
+                  const { status } = baptism as IBaptism;
+                  return <StatusBadge status={status} />;
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
+                width: 120,
+                textAlign: "center",
 
-            render: (data) => {
-              const baptism = data as IBaptismRequestForm;
-              return (
-                <TableReadyButton
-                  type="BaptismRequestForm"
-                  userId={baptism.userId}
-                  loading={isUpdatingRequestForm}
-                  status={baptism.status}
-                  onSetAsCollected={() =>
-                    updateRequestFormStatus(
-                      String(baptism.id),
-                      RequestFormStatusEnum.COLLECTED
-                    )
-                  }
-                  onSetAsReady={() =>
-                    updateRequestFormStatus(
-                      String(baptism.id),
-                      RequestFormStatusEnum.READY
-                    )
-                  }
-                />
-              );
-            },
-          },
-        ]}
-      />
+                render: (baptism) => (
+                  <ApproveRejectButtons
+                    baptism={baptism as unknown as IBaptism}
+                  />
+                ),
+              },
+            ]}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value={TabEnum.RequestForm}>
+          <CustomDatatable
+            title="Baptism Request Forms"
+            fetching={isLoadingRequestForm}
+            records={baptismRequestForms}
+            columns={[
+              { accessor: "name", title: "Name" },
+              { accessor: "mother", title: "Mother's Name" },
+              { accessor: "father", title: "Father's Name" },
+
+              {
+                accessor: "contactNumber",
+                title: "Contact Number",
+              },
+              {
+                accessor: "dateofBaptism",
+                title: "Date of Baptism",
+                render: (baptism) => {
+                  const { dateOfBaptism } = baptism as IBaptismRequestForm;
+                  return <Text>{dayjs(dateOfBaptism).format("dddd")}</Text>;
+                },
+              },
+              { accessor: "purpose", title: "Purpose" },
+              {
+                accessor: "releasedTo",
+                title: "Released To",
+                render: (baptism) => {
+                  const { releasedDate, releasedTo } =
+                    baptism as IBaptismRequestForm;
+                  if (!releasedDate || !releasedTo) return null;
+
+                  return (
+                    <Text>{`${releasedTo} (${toStandardDateFormat(releasedDate)})`}</Text>
+                  );
+                },
+              },
+              {
+                accessor: "",
+                title: "Actions",
+
+                textAlign: "center",
+
+                render: (data) => {
+                  const baptism = data as IBaptismRequestForm;
+                  return (
+                    <TableReadyButton
+                      type="BaptismRequestForm"
+                      userId={baptism.userId}
+                      loading={isUpdatingRequestForm}
+                      status={baptism.status}
+                      onSetAsCollected={(data) =>
+                        updateRequestFormStatus(
+                          String(baptism.id),
+                          RequestFormStatusEnum.RELEASED,
+                          data
+                        )
+                      }
+                      onSetAsReady={() =>
+                        updateRequestFormStatus(
+                          String(baptism.id),
+                          RequestFormStatusEnum.READY
+                        )
+                      }
+                    />
+                  );
+                },
+              },
+            ]}
+          />
+        </Tabs.Panel>
+      </Tabs>
     </PageContent>
   );
 };

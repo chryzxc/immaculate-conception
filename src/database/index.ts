@@ -9,7 +9,11 @@ import {
   update,
 } from "firebase/database";
 
-import { RequestFormStatusEnum, StatusEnum } from "../enums";
+import {
+  PriestConfirmationStatusEnum,
+  RequestFormStatusEnum,
+  StatusEnum,
+} from "../enums";
 import app from "./config";
 
 const database = getDatabase(app);
@@ -21,31 +25,39 @@ export interface IBaseEntity {
   updated?: string;
 }
 
+export interface IRequestFormRelease {
+  releasedTo?: string;
+  releasedDate: Date | string;
+}
+
 export interface IPriest extends IBaseEntity {
   authId: string | null;
   name: string;
   email: string;
 }
 
-export interface IMass extends IBaseEntity {
+export interface IPriestAppointment {
+  priestId: string;
+  priestConfirmationStatus?: PriestConfirmationStatusEnum;
+}
+
+export interface IMass extends IBaseEntity, IPriestAppointment {
   date: string;
   massIntentions: string;
   time: string;
   status: StatusEnum;
-  priestId: string;
 }
 
-export interface IChurchLiturgy extends IBaseEntity {
+export interface IChurchLiturgy extends IBaseEntity, IPriestAppointment {
   appointment: string;
   date: string;
   fullName: string;
   place: string;
   time: string;
   status: StatusEnum;
-  priestId: string;
 }
 
-export interface IHouseLiturgy extends IBaseEntity {
+export interface IHouseLiturgy extends IBaseEntity, IPriestAppointment {
   appointment: string;
   date: string;
   fullName: string;
@@ -68,7 +80,7 @@ export interface IBaptism extends IBaseEntity {
   status?: StatusEnum;
 }
 
-export interface IBaptismRequestForm extends IBaseEntity {
+export interface IBaptismRequestForm extends IBaseEntity, IRequestFormRelease {
   contactNumber: string;
   dateOfBaptism: string;
   dateOfBirth: string;
@@ -97,7 +109,9 @@ export interface IConfirmationAppointments extends IBaseEntity {
   status?: StatusEnum;
 }
 
-export interface IConfirmationRequestForm extends IBaseEntity {
+export interface IConfirmationRequestForm
+  extends IBaseEntity,
+    IRequestFormRelease {
   contactNumber: string;
   dateOfConfirmation: string;
   father: string;
@@ -107,7 +121,9 @@ export interface IConfirmationRequestForm extends IBaseEntity {
   status?: RequestFormStatusEnum;
 }
 
-export interface IConfirmationRequestForm extends IBaseEntity {
+export interface IConfirmationRequestForm
+  extends IBaseEntity,
+    IRequestFormRelease {
   contactNumber: string;
   dateOfConfirmation: string;
   father: string;
@@ -145,7 +161,7 @@ export interface IWeddingAppointment extends IBaseEntity {
   status?: StatusEnum;
 }
 
-export interface IWeddingRequestForm extends IBaseEntity {
+export interface IWeddingRequestForm extends IBaseEntity, IRequestFormRelease {
   address: string;
   bridesName: string;
   contactNumber: string;
@@ -154,7 +170,7 @@ export interface IWeddingRequestForm extends IBaseEntity {
   status?: RequestFormStatusEnum;
 }
 
-export interface IFuneralRequestForm extends IBaseEntity {
+export interface IFuneralRequestForm extends IBaseEntity, IRequestFormRelease {
   address: string;
   causeOfDeath: string;
   dateOfBirth: string;

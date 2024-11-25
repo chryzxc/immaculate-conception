@@ -1,67 +1,81 @@
-import { DonutChart } from "@mantine/charts";
-import { Group, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
+import { BarChart, DonutChart } from "@mantine/charts";
+import {
+  Center,
+  ColorSwatch,
+  Group,
+  Paper,
+  SimpleGrid,
+  Stack,
+  Text,
+} from "@mantine/core";
+import dayjs from "dayjs";
+import locale from "dayjs/plugin/localeData";
+import { useMemo } from "react";
 import PageContent from "../components/PageContent";
 import { useFetchAll } from "../hooks/useFirebaseFetcher";
+import { filterListByPriestUserId } from "../hooks/useUserFilterList";
+import useUserStore from "../store/user";
 
-interface IDataProps {
+interface IPieData {
   name: string;
   value: number;
   color: string;
 }
 
-// const MonthlyChart = ({
-//   mass = [],
-//   baptism = [],
-//   wedding = [],
-//   funeral = [],
-// }: IDataProps) => {
-//   dayjs.extend(locale);
+interface IMonthlyData {
+  title: string;
+  data: unknown[];
+  color: string;
+}
 
-//   const data = useMemo(
-//     () =>
-//       dayjs.months().map((month) => {
-//         const filteredMass = mass.filter(({ created }) =>
-//           dayjs().isSame(dayjs(created, "month"))
-//         );
+const MonthlyChart = ({
+  data,
+  title,
+}: {
+  data: IMonthlyData[];
+  title: string;
+}) => {
+  dayjs.extend(locale);
 
-//         const filteredBaptism = baptism.filter(({ created }) =>
-//           dayjs().isSame(dayjs(created, "month"))
-//         );
+  const filteredData = useMemo(
+    () =>
+      dayjs.months().map((month) => {
+        const consolidatedData = data.reduce((acc, element) => {
+          const filteredData = element.data.filter((row) => {
+            if (!!row && typeof row === "object" && "created" in row) {
+              return dayjs().isSame(dayjs(row.created as string, "month"));
+            }
+            return false;
+          });
+          return { ...acc, [element.title]: filteredData.length };
+        }, {});
 
-//         const filteredWedding = wedding.filter(({ created }) =>
-//           dayjs().isSame(dayjs(created, "month"))
-//         );
+        return {
+          month: month.slice(0, 3),
+          ...consolidatedData,
+        };
+      }),
+    [data]
+  );
 
-//         const filteredFuneral = funeral.filter(({ created }) =>
-//           dayjs().isSame(dayjs(created, "month"))
-//         );
-
-//         return {
-//           month: month.slice(0, 3),
-//           Mass: filteredMass.length,
-//           Baptism: filteredBaptism.length,
-//           Wedding: filteredWedding.length,
-//           Funeral: filteredFuneral.length,
-//         };
-//       }),
-//     [mass, baptism, wedding, funeral]
-//   );
-
-//   return (
-//     <BarChart
-//       h={300}
-//       data={data}
-//       dataKey="month"
-//       series={[
-//         { name: "Mass", color: "violet.6" },
-//         { name: "Baptism", color: "blue.6" },
-//         { name: "Wedding", color: "teal.6" },
-//         { name: "Funeral", color: "red.6" },
-//       ]}
-//       tickLine="y"
-//     />
-//   );
-// };
+  return (
+    <Paper withBorder p="md" radius="md">
+      <Text fw={600} mb="xl">
+        {title}
+      </Text>
+      <BarChart
+        h={300}
+        data={filteredData}
+        dataKey="month"
+        series={data.map((element) => ({
+          name: element.title,
+          color: element.color,
+        }))}
+        tickLine="y"
+      />
+    </Paper>
+  );
+};
 
 // const Statistics = ({ baptism, funeral, mass, wedding }: IDataProps) => {
 //   const getDiff = (data: IMass[]): number => {
@@ -149,95 +163,171 @@ interface IDataProps {
 //   return <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>{stats}</SimpleGrid>;
 // };
 
-const DataDistribution = ({ data }: { data: IDataProps[] }) => {
+const DataDistributionChart = ({
+  data,
+  title,
+}: {
+  title: string;
+  data: IPieData[];
+}) => {
+  const totalValue = data.reduce((acc, { value }) => acc + value, 0);
+
   return (
-    <SimpleGrid cols={{ base: 1, md: 2 }}>
-      <DonutChart
-        withLabelsLine
-        withLabels
-        data={data}
-        paddingAngle={8}
-        tooltipDataSource="segment"
-      />
-      <Stack justify="center">
-        {data.map((item) => (
-          <Group>
-            <Text className="text-gray-500">{item.name}:</Text>
-            <Text className="font-bold">{item.value}</Text>
-          </Group>
-        ))}
-      </Stack>
-    </SimpleGrid>
+    <Paper withBorder p="md" radius="md">
+      <Text fw={600} mb="xl">
+        {title}
+      </Text>
+      {totalValue ? (
+        <SimpleGrid cols={{ base: 1, md: 2 }}>
+          <DonutChart
+            withLabelsLine
+            withLabels
+            data={data}
+            paddingAngle={8}
+            tooltipDataSource="segment"
+          />
+          <Stack justify="center">
+            {data.map((item) => (
+              <Group>
+                <Group>
+                  <ColorSwatch color={item.color.split(".")[0]} />
+                  <Text className="text-gray-500">{item.name}:</Text>
+                </Group>
+                <Text className="font-bold">{item.value}</Text>
+              </Group>
+            ))}
+          </Stack>
+        </SimpleGrid>
+      ) : (
+        <Center p="lg">
+          <Text>No data available</Text>
+        </Center>
+      )}
+    </Paper>
   );
 };
 
-const AppointmentDataDistribution = () => {
+const Appointments = () => {
+  const { user } = useUserStore();
   const { data: mass = [] } = useFetchAll("massAppointments");
   const { data: confirmations = [] } = useFetchAll("confirmationAppointment");
   const { data: baptism = [] } = useFetchAll("baptismAppointment");
 
   const { data: churchLiturgy = [] } = useFetchAll("churchLiturgyAppointment");
-  const { data: funeral = [] } = useFetchAll("funeralAppointment");
   const { data: houseLiturgy = [] } = useFetchAll("houseLiturgyAppointment");
   const { data: wedding = [] } = useFetchAll("weddingAppointment");
 
-  return (
-    <Paper withBorder p="md" radius="md">
-      <Text fw={600} mb="xl">
-        Appointment Data Distribution
-      </Text>
-      <DataDistribution
-        data={[
-          { name: "Eucharistic", value: mass.length, color: "red.6" },
+  const filteredEucharistic = filterListByPriestUserId(mass, user);
+  const filteredChurchLitergy = filterListByPriestUserId(churchLiturgy, user);
+  const filteredHouseLiturgy = filterListByPriestUserId(houseLiturgy, user);
+
+  const pieData: IPieData[] = [
+    {
+      name: "Eucharistic",
+      value: filteredEucharistic.length,
+      color: "red.6",
+    },
+    {
+      name: "Church Liturgy",
+      value: filteredChurchLitergy.length,
+      color: "green.6",
+    },
+    {
+      name: "House Liturgy",
+      value: filteredHouseLiturgy.length,
+      color: "pink.6",
+    },
+    ...(user?.isSuperAdmin
+      ? [
           {
             name: "Confirmation",
             value: confirmations.length,
             color: "blue.6",
           },
-          {
-            name: "Church Liturgy",
-            value: churchLiturgy.length,
-            color: "green.6",
-          },
-          {
-            name: "House Liturgy",
-            value: houseLiturgy.length,
-            color: "pink.6",
-          },
+
           { name: "Baptism", value: baptism.length, color: "indigo.6" },
-          { name: "Funeral", value: funeral.length, color: "yellow.6" },
+
           { name: "Mass", value: mass.length, color: "teal.6" },
           { name: "Wedding", value: wedding.length, color: "gray.6" },
-        ]}
+        ]
+      : []),
+  ];
+
+  const monthlyData: IMonthlyData[] = [
+    { title: "Eucharistic", data: mass, color: "violet.6" },
+    { title: "Church Liturgy", data: mass, color: "red.6" },
+    { title: "Hourse Liturgy", data: mass, color: "green.6" },
+    ...(user?.isSuperAdmin
+      ? [
+          { title: "Confirmation", data: mass, color: "blue.6" },
+          { title: "Baptism", data: mass, color: "teal.6" },
+          { title: "Wedding", data: mass, color: "yellow.6" },
+        ]
+      : []),
+  ];
+
+  return (
+    <>
+      <DataDistributionChart
+        data={pieData}
+        title="Appointment Data Distribution"
       />
-    </Paper>
+      <MonthlyChart data={monthlyData} title="Appointment Monthly Statistics" />
+    </>
   );
 };
 
-const RequestFormDataDistribution = () => {
+const RequestForm = () => {
+  const { user } = useUserStore();
+
   const { data: wedding = [] } = useFetchAll("weddingRequestForm");
   const { data: confirmations = [] } = useFetchAll("confirmationRequestForm");
   const { data: baptism = [] } = useFetchAll("baptismRequestForm");
   const { data: funeral = [] } = useFetchAll("funeralRequestForm");
 
+  const pieData: IPieData[] = [
+    {
+      name: "Wedding",
+      value: wedding.length,
+      color: "red.6",
+    },
+    {
+      name: "Confirmation",
+      value: confirmations.length,
+      color: "green.6",
+    },
+    {
+      name: "Baptism",
+      value: baptism.length,
+      color: "orange.6",
+    },
+    {
+      name: "Funeral",
+      value: funeral.length,
+      color: "blue.6",
+    },
+  ];
+
+  const monthlyData: IMonthlyData[] = [
+    { title: "Wedding", data: wedding, color: "violet.6" },
+    { title: "Confirmation", data: confirmations, color: "blue.6" },
+    { title: "Funeral", data: baptism, color: "teal.6" },
+    { title: "Baptism", data: funeral, color: "red.6" },
+  ];
+
+  if (!user?.isSuperAdmin) return null;
+
   return (
-    <Paper withBorder p="md" radius="md">
-      <Text fw={600} mb="xl">
-        Request Form Data Distribution
-      </Text>
-      <DataDistribution
-        data={[
-          { name: "Baptism", value: baptism.length, color: "indigo.6" },
-          { name: "Funeral", value: funeral.length, color: "yellow.6" },
-          {
-            name: "Confirmation",
-            value: confirmations.length,
-            color: "teal.6",
-          },
-          { name: "Wedding", value: wedding.length, color: "gray.6" },
-        ]}
+    <>
+      <DataDistributionChart
+        data={pieData}
+        title="Request Form Data Distribution"
       />
-    </Paper>
+      <MonthlyChart
+        data={monthlyData}
+        title="Request Form Monthly Statistics"
+      />
+    </>
   );
 };
 
@@ -246,15 +336,9 @@ export default function DashboardPage() {
     <PageContent>
       <Stack>
         {/* <Statistics {...data} /> */}
-        <SimpleGrid cols={{ base: 1, md: 2 }}>
-          <AppointmentDataDistribution />
-          <RequestFormDataDistribution />
-          {/* <Paper withBorder p="md" radius="md">
-            <Text fw={600} mb="xl">
-              Monthly Statistics
-            </Text>
-            <MonthlyChart {...data} />
-          </Paper> */}
+        <SimpleGrid cols={{ base: 1 }}>
+          <Appointments />
+          <RequestForm />
         </SimpleGrid>
       </Stack>
     </PageContent>

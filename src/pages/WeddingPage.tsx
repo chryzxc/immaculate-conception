@@ -6,6 +6,7 @@ import {
   Drawer,
   Group,
   Stack,
+  Tabs,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -19,6 +20,7 @@ import {
 import { DatePickerInput } from "@mantine/dates";
 import CustomDatatable from "../components/CustomDatable";
 import {
+  IRequestFormRelease,
   IWeddingAnnouncement,
   IWeddingAppointment,
   IWeddingRequestForm,
@@ -36,6 +38,13 @@ import {
   TableApproveRejectButtons,
   TableReadyButton,
 } from "../components/TableActions";
+import useUserStore from "../store/user";
+
+enum TabEnum {
+  WeddingAnnoucements = "wedding-announcements",
+  WedddingAppointments = "wedding-appointments",
+  WeddingRequestForms = "wedding-request-forms",
+}
 
 interface IWeddingAnnouncementDrawer {
   opened: boolean;
@@ -221,49 +230,102 @@ const WeddingAnnouncementDrawer = ({
   );
 };
 
-const WeddingPage = () => {
+const WeddingAppointments = () => {
+  const { data: weddingAppointments = [], isLoading: isLoadingAppointments } =
+    useFetchAll("weddingAppointment");
+
+  return (
+    <CustomDatatable
+      title="Wedding Appointments"
+      fetching={isLoadingAppointments}
+      records={weddingAppointments}
+      columns={[
+        { accessor: "bride" },
+        { accessor: "brideAge", title: "Bride Age" },
+        { accessor: "groom" },
+        { accessor: "groomAge", title: "Groom Age" },
+        { accessor: "contactNumber", title: "Contact Number" },
+
+        { accessor: "confirmedBy", title: "Confirmed By" },
+
+        {
+          accessor: "dateWedding",
+          title: "Date of Wedding",
+          render: (wedding) => {
+            const { dateWedding, timeWedding } = wedding as IWeddingAppointment;
+            return (
+              <Text>{`${toStandardDateFormat(dateWedding, true)} ${timeWedding}`}</Text>
+            );
+          },
+        },
+        {
+          accessor: "dateConfirmation",
+          title: "Confirmation Date",
+          render: (wedding) => {
+            const { dateConfirmation, timeConfirmation } =
+              wedding as IWeddingAppointment;
+            return (
+              <Text>{`${toStandardDateFormat(dateConfirmation, true)} ${timeConfirmation}`}</Text>
+            );
+          },
+        },
+
+        {
+          accessor: "dateInterview",
+          title: "Interview Date",
+          render: (wedding) => {
+            const { dateInterview, timeInterview } =
+              wedding as IWeddingAppointment;
+            return (
+              <Text>{`${toStandardDateFormat(dateInterview, true)} ${timeInterview}`}</Text>
+            );
+          },
+        },
+        {
+          accessor: "dateCounseling",
+          title: "Counseling Date",
+          render: (wedding) => {
+            const { dateCounseling } = wedding as IWeddingAppointment;
+            return <Text>{toStandardDateFormat(dateCounseling, true)}</Text>;
+          },
+        },
+
+        { accessor: "venue" },
+
+        {
+          accessor: "status",
+          width: 120,
+          render: (wedding) => {
+            const { status } = wedding as IWeddingAppointment;
+            return <StatusBadge status={status} />;
+          },
+        },
+        {
+          accessor: "",
+          title: "Actions",
+          width: 150,
+          textAlign: "center",
+
+          render: (wedding) => (
+            <ApproveRejectButtons
+              wedding={wedding as unknown as IWeddingAppointment}
+            />
+          ),
+        },
+      ]}
+    />
+  );
+};
+
+const WeddingAnnouncements = () => {
   const [selectedWeddingAnnouncement, setSelectedWeddingAnnouncement] =
     useState<IWeddingAnnouncement | null>(null);
   const [opened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
-
   const { data: announcements = [], isLoading } = useFetchAll(
     "weddingAnnouncements"
   );
   const { mutate: deleteMutation } = useDelete("weddingAnnouncements");
-
-  const { data: weddingAppointments = [], isLoading: isLoadingAppointments } =
-    useFetchAll("weddingAppointment");
-
-  const { data: weddingRequestForms = [], isLoading: isLoadingRequestForm } =
-    useFetchAll("weddingRequestForm");
-
-  const { mutate: updateWeddingRequstForm, isPending: isUpdatingRequestForm } =
-    useUpdate("weddingRequestForm");
-
-  const updateRequestFormStatus = async (
-    id: string,
-    status: RequestFormStatusEnum
-  ) => {
-    try {
-      if (!id) return;
-      await updateWeddingRequstForm({
-        id,
-        data: { status },
-      });
-      notifications.show({
-        title: "Success",
-        message: "Request form updated",
-        color: "green",
-      });
-    } catch (e) {
-      notifications.show({
-        title: "Failed to update",
-        message: String(e),
-        color: "red",
-      });
-    }
-  };
 
   const editWeddingAnnouncement = (announcement: IWeddingAnnouncement) => {
     setSelectedWeddingAnnouncement(announcement);
@@ -288,7 +350,7 @@ const WeddingPage = () => {
   };
 
   return (
-    <PageContent>
+    <>
       <CustomDatatable
         title="Wedding Announcements"
         fetching={isLoading}
@@ -373,139 +435,6 @@ const WeddingPage = () => {
         }
       />
 
-      <CustomDatatable
-        title="Wedding Appointments"
-        fetching={isLoadingAppointments}
-        records={weddingAppointments}
-        columns={[
-          { accessor: "bride" },
-          { accessor: "brideAge", title: "Bride Age" },
-          { accessor: "groom" },
-          { accessor: "groomAge", title: "Groom Age" },
-          { accessor: "contactNumber", title: "Contact Number" },
-
-          { accessor: "confirmedBy", title: "Confirmed By" },
-
-          {
-            accessor: "dateWedding",
-            title: "Date of Wedding",
-            render: (wedding) => {
-              const { dateWedding, timeWedding } =
-                wedding as IWeddingAppointment;
-              return (
-                <Text>{`${toStandardDateFormat(dateWedding, true)} ${timeWedding}`}</Text>
-              );
-            },
-          },
-          {
-            accessor: "dateConfirmation",
-            title: "Confirmation Date",
-            render: (wedding) => {
-              const { dateConfirmation, timeConfirmation } =
-                wedding as IWeddingAppointment;
-              return (
-                <Text>{`${toStandardDateFormat(dateConfirmation, true)} ${timeConfirmation}`}</Text>
-              );
-            },
-          },
-
-          {
-            accessor: "dateInterview",
-            title: "Interview Date",
-            render: (wedding) => {
-              const { dateInterview, timeInterview } =
-                wedding as IWeddingAppointment;
-              return (
-                <Text>{`${toStandardDateFormat(dateInterview, true)} ${timeInterview}`}</Text>
-              );
-            },
-          },
-          {
-            accessor: "dateCounseling",
-            title: "Counseling Date",
-            render: (wedding) => {
-              const { dateCounseling } = wedding as IWeddingAppointment;
-              return <Text>{toStandardDateFormat(dateCounseling, true)}</Text>;
-            },
-          },
-
-          { accessor: "venue" },
-
-          {
-            accessor: "status",
-            width: 120,
-            render: (wedding) => {
-              const { status } = wedding as IWeddingAppointment;
-              return <StatusBadge status={status} />;
-            },
-          },
-          {
-            accessor: "",
-            title: "Actions",
-            width: 150,
-            textAlign: "center",
-
-            render: (wedding) => (
-              <ApproveRejectButtons
-                wedding={wedding as unknown as IWeddingAppointment}
-              />
-            ),
-          },
-        ]}
-      />
-
-      <CustomDatatable
-        title="Wedding Request Forms"
-        fetching={isLoadingRequestForm}
-        records={weddingRequestForms}
-        columns={[
-          { accessor: "bridesName", title: "Bride's Name" },
-          { accessor: "groomsName", title: "Groom's Name" },
-          {
-            accessor: "contactNumber",
-            title: "Contact Number",
-          },
-          {
-            accessor: "dateofWedding",
-            title: "Date of Wedding",
-            render: (wedding) => {
-              const { dateOfWedding } = wedding as IWeddingRequestForm;
-              return <Text>{dayjs(dateOfWedding).format("dddd")}</Text>;
-            },
-          },
-          { accessor: "purpose", title: "Purpose" },
-          {
-            accessor: "",
-            title: "Actions",
-
-            textAlign: "center",
-
-            render: (data) => {
-              const wedding = data as IWeddingRequestForm;
-              return (
-                <TableReadyButton
-                  type="WeddingRequestForm"
-                  userId={wedding.userId}
-                  loading={isUpdatingRequestForm}
-                  status={wedding.status}
-                  onSetAsCollected={() =>
-                    updateRequestFormStatus(
-                      String(wedding.id),
-                      RequestFormStatusEnum.COLLECTED
-                    )
-                  }
-                  onSetAsReady={() =>
-                    updateRequestFormStatus(
-                      String(wedding.id),
-                      RequestFormStatusEnum.READY
-                    )
-                  }
-                />
-              );
-            },
-          },
-        ]}
-      />
       <WeddingAnnouncementDrawer
         onClose={() => {
           setSelectedWeddingAnnouncement(null);
@@ -514,6 +443,150 @@ const WeddingPage = () => {
         opened={opened}
         selectedWeddingAnnouncement={selectedWeddingAnnouncement}
       />
+    </>
+  );
+};
+
+const WeddingRequestForms = () => {
+  const { data: weddingRequestForms = [], isLoading: isLoadingRequestForm } =
+    useFetchAll("weddingRequestForm");
+
+  const { mutate: updateWeddingRequstForm, isPending: isUpdatingRequestForm } =
+    useUpdate("weddingRequestForm");
+
+  const updateRequestFormStatus = async (
+    id: string,
+    status: RequestFormStatusEnum,
+    otherData?: IRequestFormRelease
+  ) => {
+    try {
+      if (!id) return;
+      await updateWeddingRequstForm({
+        id,
+        data: { status, ...otherData },
+      });
+      notifications.show({
+        title: "Success",
+        message: "Request form updated",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        title: "Failed to update",
+        message: String(e),
+        color: "red",
+      });
+    }
+  };
+  return (
+    <CustomDatatable
+      title="Wedding Request Forms"
+      fetching={isLoadingRequestForm}
+      records={weddingRequestForms}
+      columns={[
+        { accessor: "bridesName", title: "Bride's Name" },
+        { accessor: "groomsName", title: "Groom's Name" },
+        {
+          accessor: "contactNumber",
+          title: "Contact Number",
+        },
+        {
+          accessor: "dateofWedding",
+          title: "Date of Wedding",
+          render: (wedding) => {
+            const { dateOfWedding } = wedding as IWeddingRequestForm;
+            return <Text>{dayjs(dateOfWedding).format("dddd")}</Text>;
+          },
+        },
+        { accessor: "purpose", title: "Purpose" },
+        {
+          accessor: "releasedTo",
+          title: "Released To",
+          render: (baptism) => {
+            const { releasedDate, releasedTo } = baptism as IWeddingRequestForm;
+            if (!releasedDate || !releasedTo) return null;
+
+            return (
+              <Text>{`${releasedTo} (${dayjs(releasedDate).format("dddd")})`}</Text>
+            );
+          },
+        },
+        {
+          accessor: "",
+          title: "Actions",
+
+          textAlign: "center",
+
+          render: (data) => {
+            const wedding = data as IWeddingRequestForm;
+            return (
+              <TableReadyButton
+                type="WeddingRequestForm"
+                userId={wedding.userId}
+                loading={isUpdatingRequestForm}
+                status={wedding.status}
+                onSetAsCollected={(data) =>
+                  updateRequestFormStatus(
+                    String(wedding.id),
+                    RequestFormStatusEnum.COLLECTED,
+                    data
+                  )
+                }
+                onSetAsReady={() =>
+                  updateRequestFormStatus(
+                    String(wedding.id),
+                    RequestFormStatusEnum.READY
+                  )
+                }
+              />
+            );
+          },
+        },
+      ]}
+    />
+  );
+};
+
+const WeddingPage = () => {
+  const { user } = useUserStore();
+
+  return (
+    <PageContent>
+      <Tabs
+        defaultValue={
+          user?.isSuperAdmin
+            ? TabEnum.WeddingAnnoucements
+            : TabEnum.WedddingAppointments
+        }
+      >
+        <Tabs.List>
+          {user?.isSuperAdmin && (
+            <Tabs.Tab value={TabEnum.WeddingAnnoucements}>
+              Wedding Announcements
+            </Tabs.Tab>
+          )}
+          <Tabs.Tab value={TabEnum.WedddingAppointments}>
+            Wedding Appointments
+          </Tabs.Tab>
+          <Tabs.Tab value={TabEnum.WeddingRequestForms}>
+            Wedding Request Forms
+          </Tabs.Tab>
+        </Tabs.List>
+
+        {user?.isSuperAdmin && (
+          <Tabs.Panel value={TabEnum.WeddingAnnoucements}>
+            <WeddingAnnouncements />
+          </Tabs.Panel>
+        )}
+
+        <Tabs.Panel value={TabEnum.WedddingAppointments}>
+          <WeddingAppointments />
+        </Tabs.Panel>
+
+        <Tabs.Panel value={TabEnum.WeddingRequestForms}>
+          <WeddingRequestForms />
+        </Tabs.Panel>
+      </Tabs>
     </PageContent>
   );
 };

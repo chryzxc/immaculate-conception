@@ -13,6 +13,7 @@ import {
 import {
   IConfirmationAppointments,
   IConfirmationRequestForm,
+  IRequestFormRelease,
 } from "../database";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
 
@@ -97,13 +98,14 @@ const ConfirmationPage = () => {
 
   const updateRequestFormStatus = async (
     id: string,
-    status: RequestFormStatusEnum
+    status: RequestFormStatusEnum,
+    otherData?: IRequestFormRelease
   ) => {
     try {
       if (!id) return;
       await updateConfirmationRequstForm({
         id,
-        data: { status },
+        data: { status, ...otherData },
       });
       notifications.show({
         title: "Success",
@@ -187,11 +189,25 @@ const ConfirmationPage = () => {
             accessor: "dateofConfirmation",
             title: "Date of Confirmation",
             render: (confirmation) => {
-              const { baptismDate } = confirmation as IConfirmationAppointments;
-              return <Text>{dayjs(baptismDate).format("dddd")}</Text>;
+              const { dateOfConfirmation } =
+                confirmation as IConfirmationRequestForm;
+              return <Text>{dayjs(dateOfConfirmation).format("dddd")}</Text>;
             },
           },
           { accessor: "purpose", title: "Purpose" },
+          {
+            accessor: "releasedTo",
+            title: "Released To",
+            render: (baptism) => {
+              const { releasedDate, releasedTo } =
+                baptism as IConfirmationRequestForm;
+              if (!releasedDate || !releasedTo) return null;
+
+              return (
+                <Text>{`${releasedTo} (${dayjs(releasedDate).format("dddd")})`}</Text>
+              );
+            },
+          },
           {
             accessor: "",
             title: "Actions",
@@ -206,10 +222,11 @@ const ConfirmationPage = () => {
                   loading={isUpdatingRequestForm}
                   status={confirmation.status}
                   userId={confirmation.userId}
-                  onSetAsCollected={() =>
+                  onSetAsCollected={(data) =>
                     updateRequestFormStatus(
                       String(confirmation.id),
-                      RequestFormStatusEnum.COLLECTED
+                      RequestFormStatusEnum.RELEASED,
+                      data
                     )
                   }
                   onSetAsReady={() =>

@@ -1,8 +1,22 @@
-import { Group, ActionIcon, Tooltip, Button, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Group,
+  Modal,
+  Stack,
+  Text,
+  TextInput,
+  Tooltip,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { modals } from "@mantine/modals";
 import { IconCheck, IconX } from "@tabler/icons-react";
+import { useState } from "react";
+import { CONFIRMATION_MESSAGE } from "../constants/string";
+import { INotification, IRequestFormRelease } from "../database";
 import { RequestFormStatusEnum } from "../enums";
-import { INotification } from "../database";
 import { useCreate } from "../hooks/useFirebaseFetcher";
+import useUserStore from "../store/user";
 import { separatePascalCase } from "../utils";
 
 export const TableApproveRejectButtons = ({
@@ -22,28 +36,107 @@ export const TableApproveRejectButtons = ({
 }) => {
   const { mutate: createNotification } = useCreate("notification");
 
+  const { user } = useUserStore();
+
   const handleApprove = async () => {
-    await createNotification({
-      message: `${separatePascalCase(type)} has been approved`,
-      timestamp: new Date().toDateString(),
-      title: separatePascalCase(type),
-      type,
-      userId: userId || null,
-      fromAdmin: true,
+    modals.openConfirmModal({
+      title: "Are you sure you want to approve this?",
+      children: <Text size="sm">{CONFIRMATION_MESSAGE}</Text>,
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => {
+        await createNotification({
+          message: `${separatePascalCase(type)} has been approved`,
+          timestamp: new Date().toDateString(),
+          title: separatePascalCase(type),
+          type,
+          userId: userId || null,
+          fromAdmin: true,
+        });
+        onApprove();
+      },
     });
-    onApprove();
   };
 
   const handleReject = async () => {
-    await createNotification({
-      message: `${separatePascalCase(type)} has been rejected`,
-      timestamp: new Date().toDateString(),
-      title: separatePascalCase(type),
-      type,
-      userId: userId || null,
-      fromAdmin: true,
+    modals.openConfirmModal({
+      title: "Are you sure you want to reject this?",
+      children: <Text size="sm">{CONFIRMATION_MESSAGE}</Text>,
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => {
+        await createNotification({
+          message: `${separatePascalCase(type)} has been rejected`,
+          timestamp: new Date().toDateString(),
+          title: separatePascalCase(type),
+          type,
+          userId: userId || null,
+          fromAdmin: true,
+        });
+        onReject();
+      },
     });
-    onReject();
+  };
+
+  if ((status !== "pending" && !!status) || !user?.isSuperAdmin) {
+    return null;
+  }
+
+  return (
+    <Group justify="center">
+      <Tooltip label="Approve">
+        <ActionIcon
+          variant="filled"
+          color="green"
+          onClick={handleApprove}
+          loading={loading}
+        >
+          <IconCheck />
+        </ActionIcon>
+      </Tooltip>
+      <Tooltip label="Reject">
+        <ActionIcon
+          variant="filled"
+          color="red"
+          onClick={handleReject}
+          loading={loading}
+        >
+          <IconX />
+        </ActionIcon>
+      </Tooltip>
+    </Group>
+  );
+};
+
+export const TableConfirmRejectRequestButtons = ({
+  status,
+  loading,
+  onApprove,
+  onReject,
+}: {
+  status: "approved" | "rejected" | "pending" | undefined;
+  loading: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+}) => {
+  const handleApprove = async () => {
+    modals.openConfirmModal({
+      title: "Are you sure you want to confirm this?",
+      children: <Text size="sm">{CONFIRMATION_MESSAGE}</Text>,
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => {
+        onApprove();
+      },
+    });
+  };
+
+  const handleReject = async () => {
+    modals.openConfirmModal({
+      title: "Are you sure you want to reject this?",
+      children: <Text size="sm">{CONFIRMATION_MESSAGE}</Text>,
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => {
+        onReject();
+      },
+    });
   };
 
   if (status !== "pending" && !!status) {
@@ -52,7 +145,7 @@ export const TableApproveRejectButtons = ({
 
   return (
     <Group justify="center">
-      <Tooltip label="Approve">
+      <Tooltip label="Confirm">
         <ActionIcon
           variant="filled"
           color="green"
@@ -88,14 +181,29 @@ export const TableReadyButton = ({
   status: RequestFormStatusEnum | undefined;
   userId: string | undefined | null;
   onSetAsReady: () => void;
-  onSetAsCollected: () => void;
+  onSetAsCollected: (data: IRequestFormRelease) => void;
   type: INotification["type"];
 }) => {
   const { mutate: createNotification } = useCreate("notification");
+  const [openModal, setOpenModal] = useState(false);
+  const { user } = useUserStore();
+
+  const form = useForm({
+    mode: "uncontrolled",
+    initialValues: {
+      releasedTo: "",
+      releasedDate: new Date().toDateString(),
+    },
+
+    validate: {
+      releasedTo: (value) =>
+        value.length < 2 ? "Name must have at least 2 letters" : null,
+    },
+  });
 
   const handleSetAsReady = async () => {
     await createNotification({
-      message: `Certificate is ready to be collected`,
+      message: `Certificate is ready to be released`,
       timestamp: new Date().toDateString(),
       title: separatePascalCase(type),
       type,
@@ -105,38 +213,61 @@ export const TableReadyButton = ({
     onSetAsReady();
   };
 
-  const handleSetAsCollected = async () => {
+  const handleSubmit = async (values: typeof form.values) => {
     await createNotification({
-      message: `Certificate has been collected`,
+      message: `Certificate has been released to ${values.releasedTo}`,
       timestamp: new Date().toDateString(),
       title: separatePascalCase(type),
       type,
       userId: userId || null,
       fromAdmin: true,
     });
-    onSetAsCollected();
+    setOpenModal(false);
+    onSetAsCollected(values);
   };
 
-  if (status === "collected") {
+  if (!user?.isSuperAdmin) return null;
+
+  if (status === "released") {
     return (
       <Button variant="subtle" color="green">
-        Collected
+        Released
       </Button>
     );
   }
 
   if (status === "ready") {
     return (
-      <Stack className="gap-1">
-        <Text size="sm">Ready for collection</Text>
-        <Button
-          variant="outline"
-          onClick={handleSetAsCollected}
-          loading={loading}
+      <>
+        <Stack className="gap-1">
+          <Text size="sm">Ready to release</Text>
+          <Button
+            variant="outline"
+            onClick={() => setOpenModal(true)}
+            loading={loading}
+          >
+            Set as released
+          </Button>
+        </Stack>
+        <Modal
+          opened={openModal}
+          onClose={() => setOpenModal(false)}
+          title="Ready to release"
         >
-          Mark as collected
-        </Button>
-      </Stack>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack>
+              <TextInput
+                label="Released to"
+                placeholder="Enter name of the person who will receive this certificate"
+                withAsterisk
+                key={form.key("releasedTo")}
+                {...form.getInputProps("releasedTo")}
+              />
+              <Button type="submit">Release certificate</Button>
+            </Stack>
+          </form>
+        </Modal>
+      </>
     );
   }
 

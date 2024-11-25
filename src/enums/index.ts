@@ -4,7 +4,13 @@ export enum StatusEnum {
   REJECTED = "rejected",
 }
 
+export enum PriestConfirmationStatusEnum {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}
+
 export enum RequestFormStatusEnum {
-  COLLECTED = "collected",
+  RELEASED = "released",
   READY = "ready",
 }

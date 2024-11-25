@@ -25,42 +25,44 @@ import MassPage from "./pages/MassPage";
 import BaptismPage from "./pages/BaptismPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import FuneralPage from "./pages/FuneralPage";
+import { ModalsProvider } from '@mantine/modals';
 
 const queryClient = new QueryClient();
 
 const App = () => {
   return (
     <MantineProvider theme={theme}>
-      <Notifications />
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            <Route path="*" element={<PageNotFound />} />
-            <Route path="/" element={<HomePage />} />
-            {/* {user ? ( */}
-            <Route element={<Layout />}>
-              <Route path={ROUTES.dashboard} element={<DashboardPage />} />
-              <Route path={ROUTES.priests} element={<PriestPage />} />
-              <Route path={ROUTES.wedding} element={<WeddingPage />} />
-              <Route path={ROUTES.mass} element={<MassPage />} />
-              <Route path={ROUTES.baptism} element={<BaptismPage />} />
-              <Route
-                path={ROUTES.confirmation}
-                element={<ConfirmationPage />}
-              />
-              <Route
-                path={ROUTES.announcements}
-                element={<AnnouncementPage />}
-              />
-              <Route path={ROUTES.funeral} element={<FuneralPage />} />
-              {/*  <Route path="/appointments" element={<AppointmentPage />} /> */}
-            </Route>
-            {/* ) : ( */}
-            <Route path={ROUTES.login} element={<LoginPage />} />
-            {/* )} */}
-          </Routes>
-        </Router>
-      </QueryClientProvider>
+      <ModalsProvider>
+        <Notifications />
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Routes>
+              <Route path="*" element={<PageNotFound />} />
+              <Route path="/" element={<HomePage />} />
+              {/* {user ? ( */}
+              <Route element={<Layout />}>
+                <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+                <Route path={ROUTES.priests} element={<PriestPage />} />
+                <Route path={ROUTES.wedding} element={<WeddingPage />} />
+                <Route path={ROUTES.mass} element={<MassPage />} />
+                <Route path={ROUTES.baptism} element={<BaptismPage />} />
+                <Route
+                  path={ROUTES.confirmation}
+                  element={<ConfirmationPage />}
+                />
+                <Route
+                  path={ROUTES.announcements}
+                  element={<AnnouncementPage />}
+                />
+                <Route path={ROUTES.funeral} element={<FuneralPage />} />
+                {/*  <Route path="/appointments" element={<AppointmentPage />} /> */}
+              </Route>
+              {/* ) : ( */}
+              <Route path={ROUTES.login} element={<LoginPage />} />
+              {/* )} */}
+            </Routes>
+          </Router>
+        </QueryClientProvider></ModalsProvider>
     </MantineProvider>
   );
 };

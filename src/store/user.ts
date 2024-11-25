@@ -1,7 +1,7 @@
 import create from "zustand";
 import { persist } from "zustand/middleware";
 
-interface IUser {
+export interface IUser {
   id: string;
   name: string;
   isSuperAdmin: boolean;
