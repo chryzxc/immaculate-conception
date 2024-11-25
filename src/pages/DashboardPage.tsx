@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import locale from "dayjs/plugin/localeData";
 import { useMemo } from "react";
 import PageContent from "../components/PageContent";
-import { useFetchAll } from "../hooks/useFirebaseFetcher";
+import { useFetchAll, useSearchByKey } from "../hooks/useFirebaseFetcher";
 import { filterListByPriestUserId } from "../hooks/useUserFilterList";
 import useUserStore from "../store/user";
 
@@ -209,6 +209,12 @@ const DataDistributionChart = ({
 
 const Appointments = () => {
   const { user } = useUserStore();
+  const { data: priest } = useSearchByKey(
+    "priests",
+    "authId",
+    String(user?.id)
+  );
+
   const { data: mass = [] } = useFetchAll("massAppointments");
   const { data: confirmations = [] } = useFetchAll("confirmationAppointment");
   const { data: baptism = [] } = useFetchAll("baptismAppointment");
@@ -217,9 +223,21 @@ const Appointments = () => {
   const { data: houseLiturgy = [] } = useFetchAll("houseLiturgyAppointment");
   const { data: wedding = [] } = useFetchAll("weddingAppointment");
 
-  const filteredEucharistic = filterListByPriestUserId(mass, user);
-  const filteredChurchLitergy = filterListByPriestUserId(churchLiturgy, user);
-  const filteredHouseLiturgy = filterListByPriestUserId(houseLiturgy, user);
+  const filteredEucharistic = filterListByPriestUserId(
+    mass,
+    user,
+    String(priest?.[0]?.id)
+  );
+  const filteredChurchLitergy = filterListByPriestUserId(
+    churchLiturgy,
+    user,
+    String(priest?.[0]?.id)
+  );
+  const filteredHouseLiturgy = filterListByPriestUserId(
+    houseLiturgy,
+    user,
+    String(priest?.[0]?.id)
+  );
 
   const pieData: IPieData[] = [
     {

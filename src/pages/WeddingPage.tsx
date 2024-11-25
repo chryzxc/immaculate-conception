@@ -528,7 +528,7 @@ const WeddingRequestForms = () => {
                 onSetAsCollected={(data) =>
                   updateRequestFormStatus(
                     String(wedding.id),
-                    RequestFormStatusEnum.COLLECTED,
+                    RequestFormStatusEnum.RELEASED,
                     data
                   )
                 }
