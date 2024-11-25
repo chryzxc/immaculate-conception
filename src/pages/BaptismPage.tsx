@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Tabs, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, Group, Stack, Tabs, Text, Tooltip } from "@mantine/core";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
@@ -13,7 +13,7 @@ import {
   IRequestFormRelease,
 } from "../database";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
-import { TableReadyButton } from "../components/TableActions";
+import { LabeledContent, TableReadyButton } from "../components/TableActions";
 import { toStandardDateFormat } from "../utils";
 
 enum TabEnum {
@@ -242,8 +242,36 @@ const BaptismPage = () => {
 
                 render: (data) => {
                   const baptism = data as IBaptismRequestForm;
+
                   return (
                     <TableReadyButton
+                      drawerContent={
+                        <Stack>
+                          <LabeledContent label="Name" value={baptism.name} />
+                          <LabeledContent
+                            label="Mother's Name"
+                            value={baptism.mother}
+                          />
+                          <LabeledContent
+                            label="Father's Name"
+                            value={baptism.father}
+                          />
+                          <LabeledContent
+                            label="Contact Number"
+                            value={baptism.contactNumber}
+                          />
+                          <LabeledContent
+                            label="Date of Baptism"
+                            value={String(
+                              dayjs(baptism.dateOfBaptism).format("dddd")
+                            )}
+                          />
+                          <LabeledContent
+                            label="Purpose"
+                            value={baptism.purpose}
+                          />
+                        </Stack>
+                      }
                       type="BaptismRequestForm"
                       userId={baptism.userId}
                       loading={isUpdatingRequestForm}

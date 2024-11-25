@@ -1,18 +1,40 @@
-import { Button, Card, Group, Stack, Text, TextInput } from "@mantine/core";
-import { ComponentProps, useEffect, useState } from "react";
-import { DataTable } from "mantine-datatable";
-import { IconSearch, IconTrash } from "@tabler/icons-react";
+import {
+  Button,
+  Card,
+  Group,
+  NativeSelect,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
+import { IconSearch, IconTrash } from "@tabler/icons-react";
+import dayjs from "dayjs";
+import locale from "dayjs/plugin/localeData";
 import { saveAs } from "file-saver";
+import { DataTable } from "mantine-datatable";
 import Papa from "papaparse";
+import { ComponentProps, useEffect, useState } from "react";
+import { IBaseEntity } from "../database";
+
+interface IColumn {
+  accessor?: string;
+  title: string;
+}
+
+interface IRecordData {
+  [key: string]: unknown; // Index signature allows dynamic keys
+}
 
 const PAGE_SIZES = [10, 15, 20];
+dayjs.extend(locale);
 
 type TCustomDatatable = ComponentProps<typeof DataTable> & {
   title?: string;
   records: unknown[];
   actionComponent?: React.ReactNode;
   onDeleteRecords?: (records: unknown[]) => void;
+  showMonthFilter?: boolean;
 };
 
 export default function CustomDatatable({
@@ -20,6 +42,7 @@ export default function CustomDatatable({
   records,
   actionComponent,
   onDeleteRecords,
+  showMonthFilter = true,
   ...otherProps
 }: TCustomDatatable) {
   const [query, setQuery] = useState("");
@@ -30,6 +53,7 @@ export default function CustomDatatable({
     [...records].reverse().slice(0, pageSize)
   );
   const [debouncedQuery] = useDebouncedValue(query, 800);
+  const [selectedMonth, setSelectedMonth] = useState<string>("All");
 
   useEffect(() => {
     let filteredRecords = [...records];
@@ -42,10 +66,17 @@ export default function CustomDatatable({
       );
     }
 
+    if (selectedMonth !== "All") {
+      filteredRecords = filteredRecords.filter((record: unknown) => {
+        const row: IBaseEntity = record as unknown as IBaseEntity;
+        return row.created && dayjs(row?.created).isSame(dayjs(), "M");
+      });
+    }
+
     const from = (page - 1) * pageSize;
     const to = from + pageSize;
     setTableRecords(filteredRecords.reverse().slice(from, to));
-  }, [records, page, pageSize, debouncedQuery]);
+  }, [records, page, pageSize, debouncedQuery, selectedMonth]);
 
   useEffect(() => {
     setPage(1);
@@ -53,21 +84,34 @@ export default function CustomDatatable({
 
   // Export to CSV Functionality
   const exportToCSV = () => {
-    // Map records to a flat structure for CSV
-    const formattedData = records.map((record: unknown) => ({
-      Name: record.name,
-      "Mother's Name": record.motherName,
-      "Father's Name": record.fatherName,
-      Church: record.church,
-      "Birth Place": record.birthPlace,
-      "Contact Number": record.guardianNumber,
-      "Date of Baptism": record.baptismDate,
-      Sponsor: record.sponsorName,
-      Status: record.status,
-    }));
+    if (!otherProps.columns || otherProps.columns.length === 0) {
+      console.error("No columns defined for CSV export");
+      return;
+    }
+
+    // Extract headers from columns
+    const headers = otherProps.columns
+      .map((column) => {
+        const col = column as IColumn;
+        return col.accessor || col?.title;
+      })
+      .filter((title) => title?.toLowerCase() !== "actions");
+
+    const newRecords: IRecordData[] = records as IRecordData[];
+
+    // Map records to only include the values for the defined columns
+    const formattedData = newRecords.map((record: IRecordData) =>
+      headers.reduce((acc: Record<string, unknown>, header: string) => {
+        acc[header] = record[header] ?? ""; // Use empty string for missing values
+        return acc;
+      }, {})
+    );
 
     // Convert to CSV
-    const csv = Papa.unparse(formattedData);
+    const csv = Papa.unparse({
+      fields: headers,
+      data: formattedData,
+    });
 
     // Create a Blob and trigger download
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -90,23 +134,34 @@ export default function CustomDatatable({
           />
         </Group>
         <Group justify="space-between">
-          <Button onClick={exportToCSV} color="blue">
-            Export as CSV
-          </Button>
-          {onDeleteRecords && (
-            <Button
-              disabled={!selectedRecords.length}
-              color="red"
-              leftSection={<IconTrash />}
-            >
-              {!selectedRecords.length
-                ? "Select records to delete"
-                : `Delete ${selectedRecords.length} ${
-                    selectedRecords.length > 1 ? "records" : "record"
-                  }`}
-            </Button>
-          )}
-          {actionComponent}
+          <Group>
+            {showMonthFilter && (
+              <Group>
+                <NativeSelect
+                  data={["All", ...dayjs.months().map((month) => `${month}`)]}
+                  onChange={(event) =>
+                    setSelectedMonth(event.currentTarget.value)
+                  }
+                />
+              </Group>
+            )}
+
+            {onDeleteRecords && (
+              <Button
+                disabled={!selectedRecords.length}
+                color="red"
+                leftSection={<IconTrash />}
+              >
+                {!selectedRecords.length
+                  ? "Select records to delete"
+                  : `Delete ${selectedRecords.length} ${
+                      selectedRecords.length > 1 ? "records" : "record"
+                    }`}
+              </Button>
+            )}
+            {actionComponent}
+          </Group>
+          <Button onClick={exportToCSV}>Export as CSV</Button>
         </Group>
         <DataTable
           {...otherProps}

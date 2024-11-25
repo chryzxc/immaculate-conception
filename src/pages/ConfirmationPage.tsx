@@ -1,4 +1,4 @@
-import { Tabs, Text } from "@mantine/core";
+import { Stack, Tabs, Text } from "@mantine/core";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
@@ -7,6 +7,7 @@ import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
 import {
+  LabeledContent,
   TableApproveRejectButtons,
   TableReadyButton,
 } from "../components/TableActions";
@@ -201,7 +202,7 @@ const ConfirmationPage = () => {
                 title: "Contact Number",
               },
               {
-                accessor: "dateofConfirmation",
+                accessor: "dateOfConfirmation",
                 title: "Date of Confirmation",
                 render: (confirmation) => {
                   const { dateOfConfirmation } =
@@ -235,6 +236,45 @@ const ConfirmationPage = () => {
                   const confirmation = data as IConfirmationRequestForm;
                   return (
                     <TableReadyButton
+                      drawerContent={
+                        <Stack>
+                          <LabeledContent
+                            label="Name"
+                            value={confirmation.name}
+                          />
+                          <LabeledContent
+                            label="Mother's Name"
+                            value={confirmation.mother}
+                          />
+                          <LabeledContent
+                            label="Father's Name"
+                            value={confirmation.father}
+                          />
+                          <LabeledContent
+                            label="Contact Number"
+                            value={confirmation.contactNumber}
+                          />
+                          <LabeledContent
+                            label="Date of Confirmation"
+                            value={dayjs(
+                              confirmation.dateOfConfirmation
+                            ).format("dddd")}
+                          />
+                          <LabeledContent
+                            label="Purpose"
+                            value={confirmation.purpose}
+                          />
+                          <LabeledContent
+                            label="Released To"
+                            value={
+                              confirmation.releasedTo &&
+                              confirmation.releasedDate
+                                ? `${confirmation.releasedTo} (${dayjs(confirmation.releasedDate).format("dddd")})`
+                                : null
+                            }
+                          />
+                        </Stack>
+                      }
                       type="ConfirmationRequestForm"
                       loading={isUpdatingRequestForm}
                       status={confirmation.status}

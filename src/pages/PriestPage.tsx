@@ -234,6 +234,7 @@ const PriestPage = () => {
   return (
     <PageContent>
       <CustomDatatable
+        showMonthFilter={false}
         fetching={isLoading}
         columns={[
           { accessor: "name" },

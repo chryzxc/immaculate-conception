@@ -1,4 +1,4 @@
-import { Tabs, Text } from "@mantine/core";
+import { Stack, Tabs, Text } from "@mantine/core";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
@@ -7,6 +7,7 @@ import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
 import {
+  LabeledContent,
   TableApproveRejectButtons,
   TableConfirmRejectRequestButtons,
   TableReadyButton,
@@ -484,6 +485,47 @@ const FuneralRequestFormSection = () => {
             const funeral = data as IFuneralRequestForm;
             return (
               <TableReadyButton
+                drawerContent={
+                  <Stack>
+                    <LabeledContent
+                      label="Name of Deceased"
+                      value={funeral.nameOfTheDeceased}
+                    />
+                    <LabeledContent
+                      label="Name of Informant"
+                      value={funeral.nameOfInformant}
+                    />
+                    <LabeledContent
+                      label="Informant Contact"
+                      value={funeral.phoneNumberOfInformant}
+                    />
+                    <LabeledContent label="Address" value={funeral.address} />
+                    <LabeledContent
+                      label="Date of Birth"
+                      value={toStandardDateFormat(funeral.dateOfBirth, true)}
+                    />
+                    <LabeledContent
+                      label="Cause of Death"
+                      value={funeral.causeOfDeath}
+                    />
+                    <LabeledContent
+                      label="Date of Burial"
+                      value={toStandardDateFormat(funeral.dateOfBurial, true)}
+                    />
+                    <LabeledContent
+                      label="Date of Death"
+                      value={toStandardDateFormat(funeral.dateOfDeath, true)}
+                    />
+                    <LabeledContent
+                      label="Released To"
+                      value={
+                        funeral.releasedTo && funeral.releasedDate
+                          ? `${funeral.releasedTo} (${dayjs(funeral.releasedDate).format("dddd")})`
+                          : null
+                      }
+                    />
+                  </Stack>
+                }
                 type="FuneralRequestForm"
                 userId={funeral.userId}
                 loading={isUpdatingRequestForm}

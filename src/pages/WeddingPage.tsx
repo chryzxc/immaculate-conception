@@ -35,6 +35,7 @@ import dayjs from "dayjs";
 import StatusBadge from "../components/StatusBadge";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
 import {
+  LabeledContent,
   TableApproveRejectButtons,
   TableReadyButton,
 } from "../components/TableActions";
@@ -498,7 +499,6 @@ const WeddingRequestForms = () => {
             return <Text>{dayjs(dateOfWedding).format("dddd")}</Text>;
           },
         },
-        { accessor: "purpose", title: "Purpose" },
         {
           accessor: "releasedTo",
           title: "Released To",
@@ -521,6 +521,35 @@ const WeddingRequestForms = () => {
             const wedding = data as IWeddingRequestForm;
             return (
               <TableReadyButton
+                drawerContent={
+                  <Stack>
+                    <LabeledContent
+                      label="Bride's Name"
+                      value={wedding.bridesName}
+                    />
+                    <LabeledContent
+                      label="Groom's Name"
+                      value={wedding.groomsName}
+                    />
+                    <LabeledContent
+                      label="Contact Number"
+                      value={wedding.contactNumber}
+                    />
+                    <LabeledContent
+                      label="Date of Wedding"
+                      value={dayjs(wedding.dateOfWedding).format("dddd")}
+                    />
+
+                    <LabeledContent
+                      label="Released To"
+                      value={
+                        wedding.releasedTo && wedding.releasedDate
+                          ? `${wedding.releasedTo} (${dayjs(wedding.releasedDate).format("dddd")})`
+                          : null
+                      }
+                    />
+                  </Stack>
+                }
                 type="WeddingRequestForm"
                 userId={wedding.userId}
                 loading={isUpdatingRequestForm}

@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Button,
+  Drawer,
   Group,
   Modal,
   Stack,
@@ -18,6 +19,22 @@ import { RequestFormStatusEnum } from "../enums";
 import { useCreate } from "../hooks/useFirebaseFetcher";
 import useUserStore from "../store/user";
 import { separatePascalCase } from "../utils";
+import { useDisclosure } from "@mantine/hooks";
+
+export const LabeledContent = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null;
+}) => {
+  return (
+    <div className="flex row gap-2 align-center">
+      <Text>{`${label}:`}</Text>
+      <Text className="font-semibold ">{value}</Text>
+    </div>
+  );
+};
 
 export const TableApproveRejectButtons = ({
   status,
@@ -114,6 +131,7 @@ export const TableConfirmRejectRequestButtons = ({
 }: {
   status: "approved" | "rejected" | "pending" | undefined;
   loading: boolean;
+
   onApprove: () => void;
   onReject: () => void;
 }) => {
@@ -176,6 +194,7 @@ export const TableReadyButton = ({
   onSetAsReady,
   onSetAsCollected,
   type,
+  drawerContent,
 }: {
   loading: boolean;
   status: RequestFormStatusEnum | undefined;
@@ -183,7 +202,9 @@ export const TableReadyButton = ({
   onSetAsReady: () => void;
   onSetAsCollected: (data: IRequestFormRelease) => void;
   type: INotification["type"];
+  drawerContent: React.ReactNode;
 }) => {
+  const [opened, { open, close }] = useDisclosure(false);
   const { mutate: createNotification } = useCreate("notification");
   const [openModal, setOpenModal] = useState(false);
   const { user } = useUserStore();
@@ -272,8 +293,29 @@ export const TableReadyButton = ({
   }
 
   return (
-    <Button onClick={handleSetAsReady} loading={loading}>
-      Set as ready
-    </Button>
+    <>
+      <Drawer opened={opened} onClose={close} position="right">
+        <Stack justify="space-between">
+          {drawerContent}
+          <Button
+            onClick={() => {
+              handleSetAsReady();
+              close();
+            }}
+            loading={loading}
+          >
+            Set as ready
+          </Button>
+        </Stack>
+      </Drawer>
+      <Stack gap={4}>
+        <Button onClick={handleSetAsReady} loading={loading}>
+          Set as ready
+        </Button>
+        <Button onClick={open} loading={loading} variant="outline">
+          View
+        </Button>
+      </Stack>
+    </>
   );
 };
