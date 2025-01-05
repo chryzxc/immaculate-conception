@@ -246,9 +246,6 @@ const WeddingAppointments = () => {
         { accessor: "groom" },
         { accessor: "groomAge", title: "Groom Age" },
         { accessor: "contactNumber", title: "Contact Number" },
-
-        { accessor: "confirmedBy", title: "Confirmed By" },
-
         {
           accessor: "dateWedding",
           title: "Date of Wedding",
@@ -259,37 +256,37 @@ const WeddingAppointments = () => {
             );
           },
         },
-        {
-          accessor: "dateConfirmation",
-          title: "Confirmation Date",
-          render: (wedding) => {
-            const { dateConfirmation, timeConfirmation } =
-              wedding as IWeddingAppointment;
-            return (
-              <Text>{`${toStandardDateFormat(dateConfirmation, true)} ${timeConfirmation}`}</Text>
-            );
-          },
-        },
+        // {
+        //   accessor: "dateConfirmation",
+        //   title: "Confirmation Date",
+        //   render: (wedding) => {
+        //     const { dateConfirmation, timeConfirmation } =
+        //       wedding as IWeddingAppointment;
+        //     return (
+        //       <Text>{`${toStandardDateFormat(dateConfirmation, true)} ${timeConfirmation}`}</Text>
+        //     );
+        //   },
+        // },
 
-        {
-          accessor: "dateInterview",
-          title: "Interview Date",
-          render: (wedding) => {
-            const { dateInterview, timeInterview } =
-              wedding as IWeddingAppointment;
-            return (
-              <Text>{`${toStandardDateFormat(dateInterview, true)} ${timeInterview}`}</Text>
-            );
-          },
-        },
-        {
-          accessor: "dateCounseling",
-          title: "Counseling Date",
-          render: (wedding) => {
-            const { dateCounseling } = wedding as IWeddingAppointment;
-            return <Text>{toStandardDateFormat(dateCounseling, true)}</Text>;
-          },
-        },
+        // {
+        //   accessor: "dateInterview",
+        //   title: "Interview Date",
+        //   render: (wedding) => {
+        //     const { dateInterview, timeInterview } =
+        //       wedding as IWeddingAppointment;
+        //     return (
+        //       <Text>{`${toStandardDateFormat(dateInterview, true)} ${timeInterview}`}</Text>
+        //     );
+        //   },
+        // },
+        // {
+        //   accessor: "dateCounseling",
+        //   title: "Counseling Date",
+        //   render: (wedding) => {
+        //     const { dateCounseling } = wedding as IWeddingAppointment;
+        //     return <Text>{toStandardDateFormat(dateCounseling, true)}</Text>;
+        //   },
+        // },
 
         { accessor: "venue" },
 
@@ -374,12 +371,14 @@ const WeddingAnnouncements = () => {
             },
           },
           {
-            accessor: "created",
+            accessor: "dateTimeStamp",
             width: 250,
             render: (announcement) => {
               const announcementRow = announcement as IWeddingAnnouncement;
               return (
-                <Text>{toStandardDateFormat(announcementRow.created)}</Text>
+                <Text>
+                  {toStandardDateFormat(announcementRow.dateTimeStamp)}
+                </Text>
               );
             },
           },

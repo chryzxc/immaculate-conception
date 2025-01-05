@@ -21,7 +21,7 @@ const database = getDatabase(app);
 export interface IBaseEntity {
   id?: string;
   userId?: string;
-  created?: string;
+  dateTimeStamp?: string;
   updated?: string;
 }
 
@@ -264,7 +264,7 @@ export const firebaseDatabase = <T extends TDBPaths>(
     const newRef = push(dbRef); // Generates a unique key
     const formData: TDBEntities[T] = {
       ...data,
-      created: new Date().toISOString(),
+      dateTimeStamp: new Date().toISOString(),
     };
     await set(newRef, formData);
     return newRef.key as string;

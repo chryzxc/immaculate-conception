@@ -42,8 +42,10 @@ const MonthlyChart = ({
       dayjs.months().map((month) => {
         const consolidatedData = data.reduce((acc, element) => {
           const filteredData = element.data.filter((row) => {
-            if (!!row && typeof row === "object" && "created" in row) {
-              return dayjs().isSame(dayjs(row.created as string, "month"));
+            if (!!row && typeof row === "object" && "dateTimeStamp" in row) {
+              return dayjs().isSame(
+                dayjs(row.dateTimeStamp as string, "month")
+              );
             }
             return false;
           });
@@ -83,12 +85,12 @@ const MonthlyChart = ({
 //       const currentMonth = dayjs().month();
 //       const previousMonth = dayjs().subtract(1, "month").month();
 
-//       const currentMonthData = data.filter(({ created }) =>
-//         dayjs(created).isSame(dayjs().month(currentMonth))
+//       const currentMonthData = data.filter(({ dateTimeStamp }) =>
+//         dayjs(dateTimeStamp).isSame(dayjs().month(currentMonth))
 //       );
 
-//       const previousMonthData = data.filter(({ created }) =>
-//         dayjs(created).isSame(dayjs().month(previousMonth))
+//       const previousMonthData = data.filter(({ dateTimeStamp }) =>
+//         dayjs(dateTimeStamp).isSame(dayjs().month(previousMonth))
 //       );
 
 //       return Math.round(

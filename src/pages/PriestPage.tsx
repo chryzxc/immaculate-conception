@@ -240,11 +240,13 @@ const PriestPage = () => {
           { accessor: "name" },
           { accessor: "email" },
           {
-            accessor: "created",
+            accessor: "dateTimeStamp",
             width: 300,
             render: (priest) => {
               const priestRow = priest as IPriest;
-              return <Text>{toStandardDateFormat(priestRow.created)}</Text>;
+              return (
+                <Text>{toStandardDateFormat(priestRow.dateTimeStamp)}</Text>
+              );
             },
           },
           {

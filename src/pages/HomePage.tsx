@@ -73,7 +73,8 @@ const WeddingAnnouncements = () => {
         {notExpiredAnnouncements.map((weddingAnnouncement, index) => (
           <Card key={index} w="100%">
             <Text className="text-gray-400">
-              Date posted: {toStandardDateFormat(weddingAnnouncement.created)}
+              Date posted:{" "}
+              {toStandardDateFormat(weddingAnnouncement.dateTimeStamp)}
             </Text>
             <TextEditor readonly content={weddingAnnouncement.content} />
           </Card>

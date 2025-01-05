@@ -167,12 +167,14 @@ const AnnouncementPage = () => {
             },
           },
           {
-            accessor: "created",
+            accessor: "dateTimeStamp",
             width: 200,
             render: (announcement) => {
               const announcementRow = announcement as IAnnouncement;
               return (
-                <Text>{toStandardDateFormat(announcementRow.created)}</Text>
+                <Text>
+                  {toStandardDateFormat(announcementRow.dateTimeStamp)}
+                </Text>
               );
             },
           },

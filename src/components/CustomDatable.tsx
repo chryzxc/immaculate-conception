@@ -69,7 +69,9 @@ export default function CustomDatatable({
     if (selectedMonth !== "All") {
       filteredRecords = filteredRecords.filter((record: unknown) => {
         const row: IBaseEntity = record as unknown as IBaseEntity;
-        return row.created && dayjs(row?.created).isSame(dayjs(), "M");
+        return (
+          row.dateTimeStamp && dayjs(row?.dateTimeStamp).isSame(dayjs(), "M")
+        );
       });
     }
 

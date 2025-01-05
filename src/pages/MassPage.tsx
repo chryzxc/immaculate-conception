@@ -245,10 +245,9 @@ const EucharisticLiturgySection = () => {
       records={filteredMasses}
       columns={[
         { accessor: "name" },
-        { accessor: "description" },
+        { accessor: "massIntentions" },
         { accessor: "date" },
         { accessor: "time" },
-        { accessor: "place" },
         ...(user?.isSuperAdmin
           ? ([
               {
