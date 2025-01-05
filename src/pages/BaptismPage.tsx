@@ -1,5 +1,4 @@
-import { ActionIcon, Group, Stack, Tabs, Text, Tooltip } from "@mantine/core";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { Stack, Tabs, Text } from "@mantine/core";
 import { useFetchAll, useUpdate } from "../hooks/useFirebaseFetcher";
 
 import { notifications } from "@mantine/notifications";
@@ -8,12 +7,16 @@ import CustomDatatable from "../components/CustomDatable";
 import PageContent from "../components/PageContent";
 import StatusBadge from "../components/StatusBadge";
 import {
+  LabeledContent,
+  TableApproveRejectButtons,
+  TableReadyButton,
+} from "../components/TableActions";
+import {
   IBaptism,
   IBaptismRequestForm,
   IRequestFormRelease,
 } from "../database";
 import { RequestFormStatusEnum, StatusEnum } from "../enums";
-import { LabeledContent, TableReadyButton } from "../components/TableActions";
 import { toStandardDateFormat } from "../utils";
 
 enum TabEnum {
@@ -67,33 +70,15 @@ const ApproveRejectButtons = ({ baptism }: { baptism: IBaptism }) => {
     }
   };
 
-  if (baptism.status !== StatusEnum.PENDING && !!baptism.status) {
-    return null;
-  }
-
   return (
-    <Group justify="center">
-      <Tooltip label="Approve">
-        <ActionIcon
-          variant="filled"
-          color="green"
-          onClick={handleApprove}
-          loading={isUpdating}
-        >
-          <IconCheck />
-        </ActionIcon>
-      </Tooltip>
-      <Tooltip label="Reject">
-        <ActionIcon
-          variant="filled"
-          color="red"
-          onClick={handleReject}
-          loading={isUpdating}
-        >
-          <IconX />
-        </ActionIcon>
-      </Tooltip>
-    </Group>
+    <TableApproveRejectButtons
+      type="BaptismAppointment"
+      userId={baptism.userId}
+      status={baptism.status}
+      loading={isUpdating}
+      onApprove={handleApprove}
+      onReject={handleReject}
+    />
   );
 };
 
