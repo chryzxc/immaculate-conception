@@ -25,7 +25,8 @@ import MassPage from "./pages/MassPage";
 import BaptismPage from "./pages/BaptismPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import FuneralPage from "./pages/FuneralPage";
-import { ModalsProvider } from '@mantine/modals';
+import { ModalsProvider } from "@mantine/modals";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const queryClient = new QueryClient();
 
@@ -62,7 +63,8 @@ const App = () => {
               {/* )} */}
             </Routes>
           </Router>
-        </QueryClientProvider></ModalsProvider>
+        </QueryClientProvider>
+      </ModalsProvider>
     </MantineProvider>
   );
 };

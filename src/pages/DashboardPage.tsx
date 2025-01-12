@@ -15,7 +15,8 @@ import PageContent from "../components/PageContent";
 import { useFetchAll, useSearchByKey } from "../hooks/useFirebaseFetcher";
 import { filterListByPriestUserId } from "../hooks/useUserFilterList";
 import useUserStore from "../store/user";
-
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
 interface IPieData {
   name: string;
   value: number;
@@ -27,6 +28,8 @@ interface IMonthlyData {
   data: unknown[];
   color: string;
 }
+
+const localizer = momentLocalizer(moment);
 
 const MonthlyChart = ({
   data,
@@ -42,12 +45,12 @@ const MonthlyChart = ({
       dayjs.months().map((month) => {
         const consolidatedData = data.reduce((acc, element) => {
           const filteredData = element.data.filter((row) => {
-            if (!!row && typeof row === "object" && "dateTimeStamp" in row) {
-              return dayjs().isSame(
-                dayjs(row.dateTimeStamp as string, "month")
-              );
-            }
-            return false;
+            // if (!!row && typeof row === "object" && "dateTimeStamp" in row) {
+            return dayjs(dayjs().get("month")).isSame(
+              dayjs(row.dateTimeStamp as string, "month")
+            );
+            // }
+            // return false;
           });
           return { ...acc, [element.title]: filteredData.length };
         }, {});
@@ -286,8 +289,45 @@ const Appointments = () => {
       : []),
   ];
 
+  const calendarEvents = useMemo(() => {
+    const getDateTime = (date: string, time: string) =>
+      moment(`${date} ${time}`, "d/mm/yyyy hh:mm a").toDate();
+
+    const eucharistic = filteredEucharistic.map((appointment) => ({
+      id: appointment.id,
+      title: `Mass Intentions: ${appointment.massIntentions}`,
+      start: getDateTime(appointment.date, appointment.time),
+      end: getDateTime(appointment.date, appointment.time),
+    }));
+
+    const churchLiturgy = filteredChurchLitergy.map((appointment) => ({
+      id: appointment.id,
+      title: `${appointment.appointment}: ${appointment.fullName} in ${appointment.place}`,
+      start: getDateTime(appointment.date, appointment.time),
+      end: getDateTime(appointment.date, appointment.time),
+    }));
+
+    const houseLiturgy = filteredHouseLiturgy.map((appointment) => ({
+      id: appointment.id,
+      title: `${appointment.appointment}: ${appointment.fullName} in ${appointment.place}`,
+      start: getDateTime(appointment.date, appointment.time),
+      end: getDateTime(appointment.date, appointment.time),
+    }));
+
+    return [...eucharistic, ...churchLiturgy, ...houseLiturgy];
+  }, [filteredChurchLitergy, filteredEucharistic, filteredHouseLiturgy]);
+
   return (
     <>
+      <Paper withBorder p="md" radius="md" style={{ height: "500px" }}>
+        <Calendar
+          localizer={localizer}
+          events={calendarEvents}
+          startAccessor="start"
+          endAccessor="end"
+          popup
+        />
+      </Paper>
       <DataDistributionChart
         data={pieData}
         title="Appointment Data Distribution"

@@ -3,11 +3,11 @@ import { PriestConfirmationStatusEnum } from "../enums";
 import useUserStore, { IUser } from "../store/user";
 import { useSearchByKey } from "./useFirebaseFetcher";
 
-export const filterListByPriestUserId = (
-  data: unknown[],
+export const filterListByPriestUserId = <T>(
+  data: T[],
   user: IUser | null,
   priestId: string
-) => {
+): T[] => {
   const filteredMasses = user?.isSuperAdmin
     ? data
     : data.filter((element) => {
