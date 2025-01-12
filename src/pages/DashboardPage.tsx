@@ -45,12 +45,15 @@ const MonthlyChart = ({
       dayjs.months().map((month) => {
         const consolidatedData = data.reduce((acc, element) => {
           const filteredData = element.data.filter((row) => {
-            // if (!!row && typeof row === "object" && "dateTimeStamp" in row) {
-            return dayjs(dayjs().get("month")).isSame(
-              dayjs(row.dateTimeStamp as string, "month")
-            );
-            // }
-            // return false;
+            if (!!row && typeof row === "object" && "dateTimeStamp" in row) {
+              return (
+                month ===
+                moment(row.dateTimeStamp as string)
+                  .format("MMMM")
+                  .toString()
+              );
+            }
+            return false;
           });
           return { ...acc, [element.title]: filteredData.length };
         }, {});
